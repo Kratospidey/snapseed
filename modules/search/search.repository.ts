@@ -1,6 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { RECENT_SEARCH_LIMIT } from '@/constants/limits';
+import type { SearchFilters } from '@/modules/search/search.types';
 
 type RecentSearchRecord = {
   filterSnapshot: string | null;
@@ -97,17 +98,26 @@ export class SearchRepository {
     );
   }
 
-  async searchCaptureIds(query: string, limit = 50) {
-    return this.db.getAllAsync<{ captureId: string }>(
+  async searchCaptureIds(params: { filters: SearchFilters; limit?: number; query: string }) {
+    const { clause, params: filterParams } = buildSearchFilterClause(params.filters);
+    const rows = await this.db.getAllAsync<{ captureId: string }>(
       `
         SELECT capture_id AS captureId
         FROM capture_search
+        INNER JOIN captures c ON c.id = capture_search.capture_id
+        LEFT JOIN reminders r ON r.capture_id = c.id
         WHERE capture_search MATCH ?
+          AND c.deleted_at IS NULL
+          ${clause ? `AND ${clause}` : ''}
+        ORDER BY bm25(capture_search), c.imported_at DESC
         LIMIT ?
       `,
-      query,
-      limit,
+      params.query,
+      ...filterParams,
+      params.limit ?? 50,
     );
+
+    return rows.map((row) => row.captureId);
   }
 
   async upsertCaptureDocument(input: { captureId: string; noteText: string; tagText: string }) {
@@ -122,4 +132,43 @@ export class SearchRepository {
       input.tagText,
     );
   }
+}
+
+function buildSearchFilterClause(filters: SearchFilters) {
+  const clauses: string[] = [];
+  const params: Array<number | string> = [];
+
+  if (filters.unsorted) {
+    clauses.push(`
+      c.note IS NULL
+      AND NOT EXISTS (
+        SELECT 1
+        FROM capture_tags ct_unsorted
+        WHERE ct_unsorted.capture_id = c.id
+      )
+    `);
+  }
+
+  if (filters.hasReminder) {
+    clauses.push("r.status = 'pending'");
+  }
+
+  if (filters.graveyard) {
+    clauses.push('c.is_missing = 1');
+  }
+
+  if (filters.dateFrom) {
+    clauses.push('COALESCE(c.captured_at, c.imported_at) >= ?');
+    params.push(new Date(`${filters.dateFrom}T00:00:00.000`).getTime());
+  }
+
+  if (filters.dateTo) {
+    clauses.push('COALESCE(c.captured_at, c.imported_at) <= ?');
+    params.push(new Date(`${filters.dateTo}T23:59:59.999`).getTime());
+  }
+
+  return {
+    clause: clauses.join(' AND '),
+    params,
+  };
 }

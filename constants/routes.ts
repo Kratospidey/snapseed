@@ -1,3 +1,5 @@
+import type { Href } from 'expo-router';
+
 export const routes = {
   captureDetail: (captureId: string) => ({
     params: { captureId },
@@ -9,6 +11,7 @@ export const routes = {
   } as const),
   importPicker: '/modals/import/picker',
   importReview: '/modals/import/review',
+  home: '/' as Href,
   library: '/library',
   reminders: '/reminders',
   search: '/search',

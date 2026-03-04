@@ -24,7 +24,6 @@ export function LibraryListRow({ item, onPress }: LibraryListRowProps) {
         <View style={styles.badgesRow}>
           {item.isMissing === 1 ? <MetaBadge label="Graveyard" tone="danger" /> : null}
           {item.reminderDueAt ? <MetaBadge label="Reminder" tone="accent" /> : null}
-          {item.duplicateGroupHint ? <MetaBadge label="Duplicate hint" tone="neutral" /> : null}
         </View>
 
         {item.tagLabels.length > 0 ? (

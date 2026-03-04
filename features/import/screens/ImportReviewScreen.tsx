@@ -1,20 +1,22 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Image,
+  Modal,
   Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  TextInput,
   View,
+  TextInput,
 } from 'react-native';
 
+import { DateTimeFieldPicker } from '@/components/reminders/DateTimeFieldPicker';
 import { AppText } from '@/components/primitives/AppText';
 import { routes } from '@/constants/routes';
+import { ImportAssetPreview } from '@/features/import/components/ImportAssetPreview';
 import { useImportDraftStore } from '@/features/import/importDraft.store';
 import { ImportService } from '@/modules/import/import.service';
 import type { ImportDraftAsset } from '@/modules/import/import.types';
@@ -37,33 +39,71 @@ export function ImportReviewScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [previewAssetId, setPreviewAssetId] = useState<string | null>(null);
+  const lastDuplicateRefreshKeyRef = useRef<string | null>(null);
+  const latestDuplicateRefreshKeyRef = useRef<string | null>(null);
   const reviewAssets = useMemo(
     () => selectedAssetIds.map((assetId) => selectedAssets[assetId]).filter(Boolean) as ImportDraftAsset[],
+    [selectedAssetIds, selectedAssets],
+  );
+  const duplicateRefreshKey = useMemo(
+    () =>
+      selectedAssetIds
+        .map((assetId) => {
+          const asset = selectedAssets[assetId];
+
+          if (!asset) {
+            return `missing:${assetId}`;
+          }
+
+          return [
+            asset.assetId,
+            asset.mediaAssetId ?? '',
+            asset.sourceUri,
+            asset.filename ?? '',
+            asset.capturedAt ?? '',
+            asset.width ?? '',
+            asset.height ?? '',
+          ].join('|');
+        })
+        .join('||'),
     [selectedAssetIds, selectedAssets],
   );
   const duplicateAssetCount = useMemo(
     () => reviewAssets.filter((asset) => asset.duplicateMatches.length > 0).length,
     [reviewAssets],
   );
+  const previewAsset = previewAssetId ? selectedAssets[previewAssetId] ?? null : null;
 
   useEffect(() => {
     let isMounted = true;
 
     async function loadDuplicateMatches() {
       if (reviewAssets.length === 0) {
+        lastDuplicateRefreshKeyRef.current = null;
+        latestDuplicateRefreshKeyRef.current = null;
         return;
       }
 
+      if (lastDuplicateRefreshKeyRef.current === duplicateRefreshKey) {
+        return;
+      }
+
+      lastDuplicateRefreshKeyRef.current = duplicateRefreshKey;
+      latestDuplicateRefreshKeyRef.current = duplicateRefreshKey;
       setDuplicateStatus('loading');
 
       try {
+        const requestKey = duplicateRefreshKey;
         const matchesByAssetId = await importService.refreshDuplicateMatches(reviewAssets);
 
-        if (!isMounted) {
+        if (!isMounted || latestDuplicateRefreshKeyRef.current !== requestKey) {
           return;
         }
 
         setDuplicateMatches(matchesByAssetId);
+      } catch {
+        lastDuplicateRefreshKeyRef.current = null;
       } finally {
         if (isMounted) {
           setDuplicateStatus('idle');
@@ -76,7 +116,13 @@ export function ImportReviewScreen() {
     return () => {
       isMounted = false;
     };
-  }, [importService, reviewAssets, setDuplicateMatches]);
+  }, [duplicateRefreshKey, importService, reviewAssets, setDuplicateMatches]);
+
+  useEffect(() => {
+    if (previewAssetId && !selectedAssets[previewAssetId]) {
+      setPreviewAssetId(null);
+    }
+  }, [previewAssetId, selectedAssets]);
 
   async function handleSave() {
     if (reviewAssets.length === 0 || isSaving) {
@@ -153,6 +199,69 @@ export function ImportReviewScreen() {
           ) : null}
         </View>
 
+        {reviewAssets.length > 0 ? (
+          <View style={styles.assetList}>
+            {reviewAssets.map((asset) => (
+              <View key={asset.assetId} style={styles.assetCard}>
+                <ImportAssetPreview
+                  accessibilityLabel={`Preview ${asset.filename ?? 'selected image'}`}
+                  containerStyle={styles.assetPreview}
+                  fallbackLabel="Preview unavailable for this Capture"
+                  fallbackTestID={`review-preview-fallback-${asset.assetId}`}
+                  imageTestID={`review-preview-image-${asset.assetId}`}
+                  onPress={() => setPreviewAssetId(asset.assetId)}
+                  pressable
+                  previewUri={asset.previewUri}
+                />
+                <View style={styles.previewHintOverlay}>
+                  <AppText color={colors.surface} variant="caption">
+                    Tap to preview
+                  </AppText>
+                </View>
+                <View style={styles.assetBody}>
+                  <View style={styles.assetHeader}>
+                    <View style={styles.assetCopy}>
+                      <AppText numberOfLines={1} variant="action">
+                        {asset.filename ?? 'Untitled image'}
+                      </AppText>
+                      <AppText color={colors.textMuted} numberOfLines={1} variant="caption">
+                        {formatAssetMeta(asset)}
+                      </AppText>
+                    </View>
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => removeSelectedAsset(asset.assetId)}
+                      style={styles.removeButton}
+                    >
+                      <AppText variant="caption">Remove</AppText>
+                    </Pressable>
+                  </View>
+
+                  {asset.duplicateMatches.length > 0 ? (
+                    <View style={styles.duplicateList}>
+                      {asset.duplicateMatches.map((match) => (
+                        <View key={`${asset.assetId}-${match.captureId}`} style={styles.duplicateRow}>
+                          <AppText variant="caption">
+                            {match.confidence.toUpperCase()}: {match.reason}
+                          </AppText>
+                          <AppText color={colors.textMuted} variant="caption">
+                            Existing Capture imported {formatTimestamp(match.importedAt)}
+                            {match.sourceFilename ? ` • ${match.sourceFilename}` : ''}
+                          </AppText>
+                        </View>
+                      ))}
+                    </View>
+                  ) : (
+                    <AppText color={colors.textMuted} variant="caption">
+                      No duplicate warning for this item.
+                    </AppText>
+                  )}
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
         {saveMessage ? (
           <View style={styles.messageBanner}>
             <AppText color={colors.text} variant="caption">
@@ -205,32 +314,38 @@ export function ImportReviewScreen() {
 
           {sharedReminder ? (
             <View style={styles.reminderRow}>
-              <TextInput
-                keyboardType="numbers-and-punctuation"
-                onChangeText={(value) =>
-                  setSharedReminder({
-                    ...sharedReminder,
-                    localDate: value,
-                  })
-                }
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor={colors.textMuted}
-                style={[styles.input, styles.reminderInput]}
-                value={sharedReminder.localDate}
-              />
-              <TextInput
-                keyboardType="numbers-and-punctuation"
-                onChangeText={(value) =>
-                  setSharedReminder({
-                    ...sharedReminder,
-                    localTime: value,
-                  })
-                }
-                placeholder="HH:MM"
-                placeholderTextColor={colors.textMuted}
-                style={[styles.input, styles.reminderInput]}
-                value={sharedReminder.localTime}
-              />
+              <View style={styles.reminderField}>
+                <DateTimeFieldPicker
+                  accessibilityLabel="Choose reminder date"
+                  label="Date"
+                  mode="date"
+                  onChangeValue={(value) =>
+                    setSharedReminder({
+                      ...sharedReminder,
+                      localDate: value,
+                    })
+                  }
+                  placeholder="Choose a date"
+                  testID="shared-reminder-date-field"
+                  value={sharedReminder.localDate}
+                />
+              </View>
+              <View style={styles.reminderField}>
+                <DateTimeFieldPicker
+                  accessibilityLabel="Choose reminder time"
+                  label="Time"
+                  mode="time"
+                  onChangeValue={(value) =>
+                    setSharedReminder({
+                      ...sharedReminder,
+                      localTime: value,
+                    })
+                  }
+                  placeholder="Choose a time"
+                  testID="shared-reminder-time-field"
+                  value={sharedReminder.localTime}
+                />
+              </View>
             </View>
           ) : (
             <AppText color={colors.textMuted} variant="caption">
@@ -246,54 +361,7 @@ export function ImportReviewScreen() {
               Go back to the picker to choose screenshots before saving.
             </AppText>
           </View>
-        ) : (
-          <View style={styles.assetList}>
-            {reviewAssets.map((asset) => (
-              <View key={asset.assetId} style={styles.assetCard}>
-                <Image source={{ uri: asset.previewUri }} style={styles.assetPreview} />
-                <View style={styles.assetBody}>
-                  <View style={styles.assetHeader}>
-                    <View style={styles.assetCopy}>
-                      <AppText numberOfLines={1} variant="action">
-                        {asset.filename ?? 'Untitled image'}
-                      </AppText>
-                      <AppText color={colors.textMuted} numberOfLines={1} variant="caption">
-                        {formatAssetMeta(asset)}
-                      </AppText>
-                    </View>
-                    <Pressable
-                      accessibilityRole="button"
-                      onPress={() => removeSelectedAsset(asset.assetId)}
-                      style={styles.removeButton}
-                    >
-                      <AppText variant="caption">Remove</AppText>
-                    </Pressable>
-                  </View>
-
-                  {asset.duplicateMatches.length > 0 ? (
-                    <View style={styles.duplicateList}>
-                      {asset.duplicateMatches.map((match) => (
-                        <View key={`${asset.assetId}-${match.captureId}`} style={styles.duplicateRow}>
-                          <AppText variant="caption">
-                            {match.confidence.toUpperCase()}: {match.reason}
-                          </AppText>
-                          <AppText color={colors.textMuted} variant="caption">
-                            Existing Capture imported {formatTimestamp(match.importedAt)}
-                            {match.sourceFilename ? ` • ${match.sourceFilename}` : ''}
-                          </AppText>
-                        </View>
-                      ))}
-                    </View>
-                  ) : (
-                    <AppText color={colors.textMuted} variant="caption">
-                      No duplicate warning for this item.
-                    </AppText>
-                  )}
-                </View>
-              </View>
-            ))}
-          </View>
-        )}
+        ) : null}
 
         <Pressable
           accessibilityRole="button"
@@ -308,6 +376,42 @@ export function ImportReviewScreen() {
           </AppText>
         </Pressable>
       </ScrollView>
+
+      <Modal
+        animationType="fade"
+        onRequestClose={() => setPreviewAssetId(null)}
+        transparent
+        visible={previewAsset !== null}
+      >
+        <SafeAreaView style={styles.previewModalBackdrop}>
+          <Pressable
+            accessibilityLabel="Close preview"
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={() => setPreviewAssetId(null)}
+            style={styles.previewModalCloseButton}
+            testID="review-preview-close-button"
+          >
+            <Ionicons color={colors.surface} name="close" size={24} />
+          </Pressable>
+          <View style={styles.previewModalContent}>
+            {previewAsset ? (
+              <>
+                <ImportAssetPreview
+                  containerStyle={styles.previewModalImage}
+                  fallbackLabel="Preview unavailable for this Capture"
+                  fallbackTestID="review-preview-modal-fallback"
+                  imageTestID="review-preview-modal-image"
+                  previewUri={previewAsset.previewUri}
+                />
+                <AppText color={colors.surface} style={styles.previewModalCaption} variant="caption">
+                  {previewAsset.filename ?? 'Capture preview'} · tap outside or close to return
+                </AppText>
+              </>
+            ) : null}
+          </View>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -355,7 +459,8 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   assetPreview: {
-    aspectRatio: 1.4,
+    aspectRatio: 1.1,
+    minHeight: 232,
     width: '100%',
   },
   content: {
@@ -433,6 +538,45 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
+  previewHintOverlay: {
+    backgroundColor: 'rgba(32, 26, 22, 0.72)',
+    borderRadius: 999,
+    left: spacing.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    position: 'absolute',
+    top: spacing.md,
+  },
+  previewModalBackdrop: {
+    backgroundColor: 'rgba(32, 26, 22, 0.96)',
+    flex: 1,
+  },
+  previewModalCaption: {
+    textAlign: 'center',
+  },
+  previewModalCloseButton: {
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+    backgroundColor: 'rgba(255, 253, 248, 0.18)',
+    borderRadius: 999,
+    height: 42,
+    justifyContent: 'center',
+    marginRight: spacing.lg,
+    marginTop: spacing.sm,
+    width: 42,
+  },
+  previewModalContent: {
+    flex: 1,
+    gap: spacing.sm,
+    justifyContent: 'center',
+    padding: spacing.lg,
+  },
+  previewModalImage: {
+    aspectRatio: 0.72,
+    borderRadius: 28,
+    minHeight: 520,
+    width: '100%',
+  },
   primaryButton: {
     alignItems: 'center',
     backgroundColor: colors.accent,
@@ -452,6 +596,9 @@ const styles = StyleSheet.create({
   reminderRow: {
     flexDirection: 'row',
     gap: spacing.sm,
+  },
+  reminderField: {
+    flex: 1,
   },
   removeButton: {
     backgroundColor: colors.background,

@@ -9,13 +9,28 @@ import { colors } from '@/theme';
 
 export function RootLayoutShell() {
   useEffect(() => {
-    void SystemUI.setBackgroundColorAsync(colors.background);
+    if (__DEV__) {
+      console.info('[startup] SnapBrain root layout mounted');
+    }
+
+    void SystemUI.setBackgroundColorAsync(colors.background).catch((error) => {
+      if (__DEV__) {
+        console.warn('[startup] Failed to set system background color', error);
+      }
+    });
   }, []);
 
   return (
-    <SQLiteProvider databaseName={DATABASE_NAME} onInit={initializeDatabaseAsync}>
+    <SQLiteProvider
+      databaseName={DATABASE_NAME}
+      onError={(error) => {
+        console.error('[startup] SQLite provider failed', error);
+      }}
+      onInit={initializeDatabaseAsync}
+    >
       <StatusBar style="dark" />
       <Stack
+        initialRouteName="index"
         screenOptions={{
           contentStyle: {
             backgroundColor: colors.background,
@@ -23,6 +38,7 @@ export function RootLayoutShell() {
           headerShown: false,
         }}
       >
+        <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="capture/[captureId]" options={{ headerShown: false }} />
         <Stack.Screen name="capture/[captureId]/preview" options={{ headerShown: false, presentation: 'fullScreenModal' }} />

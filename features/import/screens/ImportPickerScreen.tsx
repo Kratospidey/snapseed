@@ -1,12 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Image,
   Linking,
   Pressable,
   SafeAreaView,
@@ -16,6 +15,7 @@ import {
 
 import { AppText } from '@/components/primitives/AppText';
 import { routes } from '@/constants/routes';
+import { ImportAssetPreview } from '@/features/import/components/ImportAssetPreview';
 import { useImportDraftStore } from '@/features/import/importDraft.store';
 import { ImportService } from '@/modules/import/import.service';
 import { MediaGateway } from '@/modules/media/media.gateway';
@@ -33,70 +33,146 @@ export function ImportPickerScreen() {
   const upsertSelectedAsset = useImportDraftStore((state) => state.upsertSelectedAsset);
   const [permission, setPermission] = useState<MediaPermissionState>(null);
   const [assets, setAssets] = useState<MediaPickerAsset[]>([]);
-  const [endCursor, setEndCursor] = useState<string | null>(null);
   const [hasNextPage, setHasNextPage] = useState(true);
-  const [isLoadingAssets, setIsLoadingAssets] = useState(false);
+  const [isCheckingPermission, setIsCheckingPermission] = useState(true);
+  const [isLoadingInitialAssets, setIsLoadingInitialAssets] = useState(false);
+  const [isLoadingMoreAssets, setIsLoadingMoreAssets] = useState(false);
   const [isRequestingPermission, setIsRequestingPermission] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [resolvingAssetIds, setResolvingAssetIds] = useState<Record<string, boolean>>({});
+  const endCursorRef = useRef<string | null>(null);
+  const isLoadingInitialAssetsRef = useRef(false);
+  const isLoadingMoreAssetsRef = useRef(false);
+  const isMountedRef = useRef(true);
+  const resolvingAssetIdsRef = useRef<Record<string, boolean>>({});
   const selectedAssetIdSet = useMemo(() => new Set(selectedAssetIds), [selectedAssetIds]);
 
-  const loadAssetsPage = useCallback(async (reset: boolean) => {
-    if (isLoadingAssets) {
+  const applyAssetPage = useCallback((page: { assets: MediaPickerAsset[]; endCursor: string | null; hasNextPage: boolean }, reset: boolean) => {
+    endCursorRef.current = page.endCursor;
+    setHasNextPage(page.hasNextPage);
+    setAssets((current) => {
+      if (reset) {
+        return page.assets;
+      }
+
+      const nextAssets = new Map(current.map((asset) => [asset.assetId, asset]));
+
+      for (const asset of page.assets) {
+        nextAssets.set(asset.assetId, asset);
+      }
+
+      return [...nextAssets.values()];
+    });
+  }, []);
+
+  const updatePermissionState = useCallback((nextPermission: MediaPermissionState) => {
+    setPermission((current) => (arePermissionsEqual(current, nextPermission) ? current : nextPermission));
+  }, []);
+
+  const loadInitialAssets = useCallback(async () => {
+    if (isLoadingInitialAssetsRef.current) {
       return;
     }
 
-    setIsLoadingAssets(true);
+    isLoadingInitialAssetsRef.current = true;
+    setIsLoadingInitialAssets(true);
+    setLoadError(null);
+
+    try {
+      const page = await mediaGateway.loadPhotoAssetsPage();
+
+      if (!isMountedRef.current) {
+        return;
+      }
+
+      applyAssetPage(page, true);
+    } catch {
+      if (isMountedRef.current) {
+        setAssets([]);
+        setHasNextPage(false);
+        endCursorRef.current = null;
+        setLoadError('Media could not be loaded from the device library.');
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setIsLoadingInitialAssets(false);
+      }
+
+      isLoadingInitialAssetsRef.current = false;
+    }
+  }, [applyAssetPage, mediaGateway]);
+
+  const loadMoreAssets = useCallback(async () => {
+    if (isLoadingInitialAssetsRef.current || isLoadingMoreAssetsRef.current || !hasNextPage) {
+      return;
+    }
+
+    isLoadingMoreAssetsRef.current = true;
+    setIsLoadingMoreAssets(true);
     setLoadError(null);
 
     try {
       const page = await mediaGateway.loadPhotoAssetsPage({
-        after: reset ? null : endCursor,
+        after: endCursorRef.current,
       });
 
-      setAssets((current) => (reset ? page.assets : [...current, ...page.assets]));
-      setEndCursor(page.endCursor);
-      setHasNextPage(page.hasNextPage);
-    } catch {
-      setLoadError('Media could not be loaded from the device library.');
-    } finally {
-      setIsLoadingAssets(false);
-    }
-  }, [endCursor, isLoadingAssets, mediaGateway]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadPermissionState() {
-      const nextPermission = await mediaGateway.getPermissionState();
-
-      if (!isMounted) {
+      if (!isMountedRef.current) {
         return;
       }
 
-      setPermission(nextPermission);
+      applyAssetPage(page, false);
+    } catch {
+      if (isMountedRef.current) {
+        setLoadError('More media could not be loaded from the device library.');
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setIsLoadingMoreAssets(false);
+      }
 
-      if (nextPermission?.granted) {
-        await loadAssetsPage(true);
+      isLoadingMoreAssetsRef.current = false;
+    }
+  }, [applyAssetPage, hasNextPage, mediaGateway]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    async function bootstrapPicker() {
+      try {
+        const nextPermission = await mediaGateway.getPermissionState();
+
+        if (!isMountedRef.current) {
+          return;
+        }
+
+        updatePermissionState(nextPermission);
+
+        if (nextPermission?.granted) {
+          await loadInitialAssets();
+        }
+      } finally {
+        if (isMountedRef.current) {
+          setIsCheckingPermission(false);
+        }
       }
     }
 
-    void loadPermissionState();
+    void bootstrapPicker();
 
     return () => {
-      isMounted = false;
+      isMountedRef.current = false;
     };
-  }, [loadAssetsPage, mediaGateway]);
+  }, [loadInitialAssets, mediaGateway, updatePermissionState]);
 
   async function requestAccess() {
     setIsRequestingPermission(true);
 
     try {
       const nextPermission = await mediaGateway.requestPermission();
-      setPermission(nextPermission);
+      updatePermissionState(nextPermission);
 
       if (nextPermission.granted) {
-        await loadAssetsPage(true);
+        await loadInitialAssets();
       }
     } finally {
       setIsRequestingPermission(false);
@@ -109,6 +185,11 @@ export function ImportPickerScreen() {
       return;
     }
 
+    if (resolvingAssetIdsRef.current[asset.assetId]) {
+      return;
+    }
+
+    resolvingAssetIdsRef.current = { ...resolvingAssetIdsRef.current, [asset.assetId]: true };
     setResolvingAssetIds((current) => ({ ...current, [asset.assetId]: true }));
     setLoadError(null);
 
@@ -121,6 +202,7 @@ export function ImportPickerScreen() {
       setResolvingAssetIds((current) => {
         const next = { ...current };
         delete next[asset.assetId];
+        resolvingAssetIdsRef.current = next;
         return next;
       });
     }
@@ -146,7 +228,7 @@ export function ImportPickerScreen() {
     ]);
   }
 
-  const showPermissionGate = !permission?.granted;
+  const showPermissionGate = !isCheckingPermission && !permission?.granted;
   const isDenied = permission?.canAskAgain === false && permission?.status === 'denied';
 
   return (
@@ -189,7 +271,12 @@ export function ImportPickerScreen() {
           </View>
         ) : null}
 
-        {showPermissionGate ? (
+        {isCheckingPermission ? (
+          <View style={styles.panel}>
+            <ActivityIndicator color={colors.accent} />
+            <AppText color={colors.textMuted}>Checking photo access...</AppText>
+          </View>
+        ) : showPermissionGate ? (
           <View style={styles.panel}>
             <AppText variant="title">{isDenied ? 'Photo access needed' : 'Allow photo access'}</AppText>
             <AppText color={colors.textMuted}>
@@ -215,8 +302,8 @@ export function ImportPickerScreen() {
               keyExtractor={(item) => item.assetId}
               numColumns={3}
               onEndReached={() => {
-                if (hasNextPage) {
-                  void loadAssetsPage(false);
+                if (permission?.granted && hasNextPage && !isLoadingInitialAssets && !isLoadingMoreAssets) {
+                  void loadMoreAssets();
                 }
               }}
               onEndReachedThreshold={0.6}
@@ -226,11 +313,18 @@ export function ImportPickerScreen() {
 
                 return (
                   <Pressable
+                    accessibilityLabel={`Select ${item.filename ?? 'media item'}`}
                     accessibilityRole="button"
                     onPress={() => void handleSelectAsset(item)}
                     style={[styles.assetTile, isSelected ? styles.assetTileSelected : null]}
+                    testID={`picker-asset-tile-${item.assetId}`}
                   >
-                    <Image source={{ uri: item.previewUri }} style={styles.assetImage} />
+                    <ImportAssetPreview
+                      containerStyle={styles.assetImage}
+                      fallbackTestID={`picker-preview-fallback-${item.assetId}`}
+                      imageTestID={`picker-preview-image-${item.assetId}`}
+                      previewUri={item.previewUri}
+                    />
                     {item.isLikelyScreenshot ? (
                       <View style={styles.screenshotBadge}>
                         <AppText color={colors.surface} variant="caption">
@@ -252,7 +346,7 @@ export function ImportPickerScreen() {
               }}
               showsVerticalScrollIndicator={false}
               ListEmptyComponent={
-                isLoadingAssets ? (
+                isLoadingInitialAssets ? (
                   <View style={styles.emptyState}>
                     <ActivityIndicator color={colors.accent} />
                     <AppText color={colors.textMuted}>Loading recent media...</AppText>
@@ -267,7 +361,7 @@ export function ImportPickerScreen() {
                 )
               }
               ListFooterComponent={
-                isLoadingAssets && assets.length > 0 ? (
+                isLoadingMoreAssets && assets.length > 0 ? (
                   <View style={styles.footerLoading}>
                     <ActivityIndicator color={colors.accent} />
                   </View>
@@ -280,6 +374,7 @@ export function ImportPickerScreen() {
               disabled={selectedAssetIds.length === 0}
               onPress={() => router.push(routes.importReview)}
               style={[styles.primaryButton, selectedAssetIds.length === 0 ? styles.primaryButtonDisabled : null]}
+              testID="import-picker-review-button"
             >
               <AppText style={styles.primaryButtonLabel} variant="action">
                 Review {selectedAssetIds.length > 0 ? `${selectedAssetIds.length} Capture${selectedAssetIds.length === 1 ? '' : 's'}` : 'selection'}
@@ -298,7 +393,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
   },
   assetImage: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
   },
   assetOverlay: {
     alignItems: 'flex-end',
@@ -316,6 +411,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1,
     flex: 1,
+    minHeight: 168,
     overflow: 'hidden',
   },
   assetTileSelected: {
@@ -433,3 +529,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
 });
+
+function arePermissionsEqual(current: MediaPermissionState, next: MediaPermissionState) {
+  if (!current || !next) {
+    return current === next;
+  }
+
+  return (
+    current.accessPrivileges === next.accessPrivileges &&
+    current.canAskAgain === next.canAskAgain &&
+    current.granted === next.granted &&
+    current.status === next.status
+  );
+}

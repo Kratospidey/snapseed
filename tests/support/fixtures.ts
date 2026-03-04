@@ -1,5 +1,6 @@
 import type { CaptureDetailRecord, ImportDuplicateCandidateRecord, LibraryCaptureRecord } from '@/modules/captures/capture.types';
 import type { ImportDraftAsset, ImportDuplicateMatch } from '@/modules/import/import.types';
+import type { MediaPickerAsset } from '@/modules/media/media.types';
 
 export function createCaptureDetail(overrides: Partial<CaptureDetailRecord> = {}): CaptureDetailRecord {
   return {
@@ -39,6 +40,19 @@ export function createImportDraftAsset(overrides: Partial<ImportDraftAsset> = {}
     sourceFilename: 'IMG_1234.PNG',
     sourceScheme: 'file',
     sourceUri: 'file:///preview.png',
+    width: 1080,
+    ...overrides,
+  };
+}
+
+export function createMediaPickerAsset(overrides: Partial<MediaPickerAsset> = {}): MediaPickerAsset {
+  return {
+    assetId: 'asset-1',
+    capturedAt: 1_710_000_000_000,
+    filename: 'IMG_1234.PNG',
+    height: 1920,
+    isLikelyScreenshot: true,
+    previewUri: 'file:///picker-preview.png',
     width: 1080,
     ...overrides,
   };

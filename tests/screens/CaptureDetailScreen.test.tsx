@@ -61,7 +61,7 @@ describe('CaptureDetailScreen', () => {
 
   it('renders core sections and shows Unknown for nullable file size', async () => {
     mockCaptureService.getCaptureDetail.mockResolvedValue(
-      createCaptureDetail({ fileSize: null, reminderDueAt: 1_710_000_200_000 }),
+      createCaptureDetail({ duplicateGroupHint: 'stale-hint', fileSize: null, reminderDueAt: 1_710_000_200_000 }),
     );
 
     render(<CaptureDetailScreen />);
@@ -71,6 +71,7 @@ describe('CaptureDetailScreen', () => {
     expect(screen.getByText('Open original')).toBeTruthy();
     expect(screen.getByText('Metadata')).toBeTruthy();
     expect(screen.getByText('Unknown')).toBeTruthy();
+    expect(screen.queryByText(/duplicate hint/i)).toBeNull();
   });
 
   it('renders the not-found state when no Capture exists', async () => {

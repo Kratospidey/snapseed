@@ -1,15 +1,12 @@
-import { useRouter } from 'expo-router';
-
 import { UnsupportedPlatformScreen } from '@/components/feedback/UnsupportedPlatformScreen';
+import { routes } from '@/constants/routes';
 
 export function ImportPickerRouteScreen() {
-  const router = useRouter();
-
   return (
     <UnsupportedPlatformScreen
-      ctaLabel="Back"
+      ctaHref={routes.home}
+      ctaLabel="Back to Home"
       eyebrow="Add Capture"
-      onPressCta={() => router.back()}
       title="Import is not supported on web"
     />
   );

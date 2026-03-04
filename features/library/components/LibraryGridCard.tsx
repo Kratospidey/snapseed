@@ -21,7 +21,6 @@ export function LibraryGridCard({ item, onPress }: LibraryGridCardProps) {
         <View style={styles.badgeOverlay}>
           {item.isMissing === 1 ? <MetaBadge label="Missing" tone="danger" /> : null}
           {item.reminderDueAt ? <MetaBadge label="Reminder" tone="accent" /> : null}
-          {item.duplicateGroupHint ? <MetaBadge label="Similar" tone="neutral" /> : null}
         </View>
       </View>
 

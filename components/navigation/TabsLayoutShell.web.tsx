@@ -1,5 +1,5 @@
-import TabsLayout from '@/app/(tabs)/_layout.web';
+import { Slot } from 'expo-router';
 
 export function TabsLayoutShell() {
-  return <TabsLayout />;
+  return <Slot />;
 }

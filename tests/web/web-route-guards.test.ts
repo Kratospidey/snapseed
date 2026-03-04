@@ -13,12 +13,37 @@ describe('web route guards', () => {
     expect(webShell).not.toContain("expo-sqlite");
   });
 
+  it('keeps the web tabs layout slot-based instead of depending on a native tab initialRouteName', () => {
+    const webTabsLayout = repoFile('app/(tabs)/_layout.web.tsx');
+
+    expect(webTabsLayout).toContain('Slot');
+    expect(webTabsLayout).not.toContain('initialRouteName');
+    expect(webTabsLayout).not.toContain('<Tabs');
+  });
+
+  it('keeps not-found recovery pointed at the web home route', () => {
+    const notFoundRoute = repoFile('app/+not-found.tsx');
+
+    expect(notFoundRoute).toContain('href={routes.home}');
+    expect(notFoundRoute).toContain('Return to SnapBrain web home');
+  });
+
   it('keeps the tags route pointed at a web-safe wrapper instead of the SQLite-backed screen', () => {
     const routeEntry = repoFile('app/(tabs)/tags/index.tsx');
     const webWrapper = repoFile('features/tags/screens/TagsRouteScreen.web.tsx');
 
     expect(routeEntry).toContain("TagsRouteScreen");
     expect(routeEntry).not.toContain("TagsScreen");
+    expect(webWrapper).toContain("UnsupportedPlatformScreen");
+    expect(webWrapper).not.toContain("expo-sqlite");
+  });
+
+  it('keeps the search route pointed at a web-safe wrapper instead of the SQLite-backed hook screen', () => {
+    const routeEntry = repoFile('app/(tabs)/search/index.tsx');
+    const webWrapper = repoFile('features/search/screens/SearchRouteScreen.web.tsx');
+
+    expect(routeEntry).toContain("SearchRouteScreen");
+    expect(routeEntry).not.toContain("SearchScreen");
     expect(webWrapper).toContain("UnsupportedPlatformScreen");
     expect(webWrapper).not.toContain("expo-sqlite");
   });

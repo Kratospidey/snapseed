@@ -1,3 +1,4 @@
+import { Link, type Href } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppScreen } from '@/components/primitives/AppScreen';
@@ -5,6 +6,7 @@ import { AppText } from '@/components/primitives/AppText';
 import { colors, spacing } from '@/theme';
 
 type UnsupportedPlatformScreenProps = {
+  ctaHref?: Href;
   ctaLabel?: string;
   eyebrow?: string;
   message?: string;
@@ -16,12 +18,16 @@ const DEFAULT_MESSAGE =
   'SnapBrain is currently built for Android and iPhone. Web is intentionally limited in this pass so the app does not crash while native features continue to stabilize.';
 
 export function UnsupportedPlatformScreen({
+  ctaHref,
   ctaLabel,
   eyebrow = 'Web',
   message = DEFAULT_MESSAGE,
   onPressCta,
   title = 'Mobile-only for now',
 }: UnsupportedPlatformScreenProps) {
+  const showLinkCta = Boolean(ctaHref && ctaLabel && !onPressCta);
+  const showPressableCta = Boolean(onPressCta && ctaLabel && !ctaHref);
+
   return (
     <AppScreen contentContainerStyle={styles.content}>
       <View style={styles.card}>
@@ -35,7 +41,16 @@ export function UnsupportedPlatformScreen({
             to native where Capture import, SQLite metadata, and device URI handling actually run.
           </AppText>
         </View>
-        {ctaLabel && onPressCta ? (
+        {showLinkCta ? (
+          <Link asChild href={ctaHref!}>
+            <Pressable accessibilityRole="link" style={styles.button}>
+              <AppText color={colors.surface} variant="action">
+                {ctaLabel}
+              </AppText>
+            </Pressable>
+          </Link>
+        ) : null}
+        {showPressableCta ? (
           <Pressable accessibilityRole="button" onPress={onPressCta} style={styles.button}>
             <AppText color={colors.surface} variant="action">
               {ctaLabel}

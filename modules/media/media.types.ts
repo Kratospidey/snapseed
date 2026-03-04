@@ -6,7 +6,7 @@ export type MediaPickerAsset = {
   filename: string | null;
   height: number | null;
   isLikelyScreenshot: boolean;
-  previewUri: string;
+  previewUri: string | null;
   width: number | null;
 };
 
@@ -20,7 +20,7 @@ export type ResolvedMediaAsset = {
   isLikelyScreenshot: boolean;
   mediaAssetId: string | null;
   mimeType: string | null;
-  previewUri: string;
+  previewUri: string | null;
   sourceFilename: string | null;
   sourceScheme: 'content' | 'file' | 'ph' | 'unknown';
   sourceUri: string;

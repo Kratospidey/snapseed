@@ -44,7 +44,7 @@ describe('LibraryScreen', () => {
     mockUseLibraryScreen.mockReturnValue({
       data: {
         activeTagCount: 1,
-        feed: [createLibraryCapture()],
+        feed: [createLibraryCapture({ duplicateGroupHint: 'stale-hint' })],
         graveyardCount: 0,
         reminderCount: 0,
         smartView: 'recent',
@@ -70,5 +70,7 @@ describe('LibraryScreen', () => {
 
     expect(screen.getByText('Library')).toBeTruthy();
     expect(screen.getAllByText('Recently Added').length).toBeGreaterThan(0);
+    expect(screen.queryByText(/duplicate hint/i)).toBeNull();
+    expect(screen.queryByText(/similar/i)).toBeNull();
   });
 });

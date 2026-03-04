@@ -1,15 +1,12 @@
-import { useRouter } from 'expo-router';
-
 import { UnsupportedPlatformScreen } from '@/components/feedback/UnsupportedPlatformScreen';
+import { routes } from '@/constants/routes';
 
 export default function ImportReviewWebScreen() {
-  const router = useRouter();
-
   return (
     <UnsupportedPlatformScreen
-      ctaLabel="Back"
+      ctaHref={routes.home}
+      ctaLabel="Back to Home"
       eyebrow="Import Review"
-      onPressCta={() => router.back()}
       title="Import review is not supported on web"
     />
   );

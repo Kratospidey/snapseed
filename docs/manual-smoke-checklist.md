@@ -1,5 +1,11 @@
 # Manual Smoke Checklist
 
+## Web runtime
+
+- Open `/` in the web dev server and confirm the unsupported web home renders.
+- Open `/library` and confirm the unsupported Library shell renders without a route error.
+- Open an unknown route and confirm the not-found screen returns to `/` successfully.
+
 ## Launch and navigation
 
 - Launch the app on Android or iPhone from Expo Go.
@@ -55,4 +61,7 @@
   - platform
   - device
   - URI scheme such as `content://`, `file://`, or `ph://`
-- If startup times out, note whether `start:tunnel` changes the outcome.
+- If startup times out, record:
+  - whether `start:tunnel` changes the outcome
+  - whether any `[startup]` log appeared in Metro
+  - whether the startup error screen appeared on device

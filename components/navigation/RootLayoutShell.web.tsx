@@ -8,6 +8,7 @@ export function RootLayoutShell() {
     <>
       <StatusBar style="dark" />
       <Stack
+        initialRouteName="index"
         screenOptions={{
           contentStyle: {
             backgroundColor: colors.background,
@@ -15,6 +16,7 @@ export function RootLayoutShell() {
           headerShown: false,
         }}
       >
+        <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="capture/[captureId]" options={{ headerShown: false }} />
         <Stack.Screen name="capture/[captureId]/preview" options={{ headerShown: false, presentation: 'fullScreenModal' }} />

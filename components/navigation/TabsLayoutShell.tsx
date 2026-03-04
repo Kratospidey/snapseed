@@ -7,12 +7,14 @@ import { routes } from '@/constants/routes';
 import { colors, spacing, typography } from '@/theme';
 
 const TAB_ICON_BY_ROUTE = {
-  library: 'grid-outline',
-  reminders: 'alarm-outline',
-  search: 'search-outline',
-  settings: 'settings-outline',
-  tags: 'pricetags-outline',
+  'library/index': 'grid-outline',
+  'reminders/index': 'alarm-outline',
+  'search/index': 'search-outline',
+  'settings/index': 'settings-outline',
+  'tags/index': 'pricetags-outline',
 } as const;
+
+type TabRouteName = keyof typeof TAB_ICON_BY_ROUTE;
 
 export function TabsLayoutShell() {
   const router = useRouter();
@@ -20,7 +22,7 @@ export function TabsLayoutShell() {
   return (
     <View style={styles.shell}>
       <Tabs
-        initialRouteName="library"
+        initialRouteName="library/index"
         screenOptions={({ route }) => ({
           headerShown: false,
           tabBarActiveTintColor: colors.accent,
@@ -39,17 +41,17 @@ export function TabsLayoutShell() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons
               color={color}
-              name={TAB_ICON_BY_ROUTE[route.name as keyof typeof TAB_ICON_BY_ROUTE]}
+              name={TAB_ICON_BY_ROUTE[(route.name as TabRouteName) ?? 'library/index'] ?? 'grid-outline'}
               size={size}
             />
           ),
         })}
       >
-        <Tabs.Screen name="library" options={{ title: 'Library' }} />
-        <Tabs.Screen name="search" options={{ title: 'Search' }} />
-        <Tabs.Screen name="reminders" options={{ title: 'Reminders' }} />
-        <Tabs.Screen name="tags" options={{ title: 'Tags' }} />
-        <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
+        <Tabs.Screen name="library/index" options={{ title: 'Library' }} />
+        <Tabs.Screen name="search/index" options={{ title: 'Search' }} />
+        <Tabs.Screen name="reminders/index" options={{ title: 'Reminders' }} />
+        <Tabs.Screen name="tags/index" options={{ title: 'Tags' }} />
+        <Tabs.Screen name="settings/index" options={{ title: 'Settings' }} />
       </Tabs>
 
       <Pressable accessibilityRole="button" onPress={() => router.push(routes.importPicker)} style={styles.fab}>

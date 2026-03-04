@@ -45,7 +45,7 @@ export class MediaGateway {
         filename: asset.filename ?? null,
         height: normalizeDimension(asset.height),
         isLikelyScreenshot: isLikelyScreenshot(asset.filename),
-        previewUri: asset.uri,
+        previewUri: normalizePreviewUri(asset.uri),
         width: normalizeDimension(asset.width),
       })),
       endCursor: page.endCursor || null,
@@ -57,7 +57,11 @@ export class MediaGateway {
   async resolveAssetForImport(asset: MediaPickerAsset): Promise<ResolvedMediaAsset> {
     try {
       const info = await MediaLibrary.getAssetInfoAsync(asset.assetId, { shouldDownloadFromNetwork: false });
-      const sourceUri = info.localUri ?? info.uri ?? asset.previewUri;
+      const sourceUri = normalizePreviewUri(info.localUri ?? info.uri) ?? asset.previewUri;
+
+      if (!sourceUri) {
+        throw new Error('This media item could not be resolved from the device library.');
+      }
 
       return {
         assetId: asset.assetId,
@@ -138,7 +142,7 @@ export class MediaGateway {
       const refreshed = await MediaLibrary.getAssetInfoAsync(asset.mediaAssetId, {
         shouldDownloadFromNetwork: false,
       });
-      const sourceUri = refreshed.localUri ?? refreshed.uri ?? asset.sourceUri;
+      const sourceUri = normalizePreviewUri(refreshed.localUri ?? refreshed.uri) ?? asset.sourceUri;
 
       return {
         asset: {
@@ -203,4 +207,8 @@ function normalizeDimension(value: number | null | undefined) {
 
 function normalizeTimestamp(value: number | null | undefined) {
   return typeof value === 'number' && Number.isFinite(value) && value > 0 ? Math.round(value) : null;
+}
+
+function normalizePreviewUri(value: string | null | undefined) {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 }

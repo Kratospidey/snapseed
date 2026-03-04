@@ -274,7 +274,6 @@ export function CaptureDetailScreen() {
             <View style={styles.badgeRow}>
               {capture.isMissing ? <MetaBadge label="Graveyard" tone="danger" /> : null}
               {capture.reminderDueAt ? <MetaBadge label="Reminder" tone="accent" /> : null}
-              {capture.duplicateGroupHint ? <MetaBadge label="Duplicate hint" tone="neutral" /> : null}
             </View>
 
             <View style={styles.quickActionsRow}>

@@ -2,6 +2,7 @@ import { Link, Stack } from 'expo-router';
 
 import { AppScreen } from '@/components/primitives/AppScreen';
 import { AppText } from '@/components/primitives/AppText';
+import { routes } from '@/constants/routes';
 import { colors, spacing } from '@/theme';
 
 export default function NotFoundScreen() {
@@ -20,11 +21,10 @@ export default function NotFoundScreen() {
         <AppText color={colors.textMuted} style={{ textAlign: 'center' }}>
           The current screen is not implemented in this milestone.
         </AppText>
-        <Link href="/library">
-          <AppText variant="action">Return to Library</AppText>
+        <Link href={routes.home}>
+          <AppText variant="action">Return to SnapBrain web home</AppText>
         </Link>
       </AppScreen>
     </>
   );
 }
-
