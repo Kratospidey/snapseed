@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "SnapBrain",
+    "slug": "snapbrain",
+    "version": "0.1.0",
+    "scheme": "snapbrain",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "plugins": [
+      "expo-router"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
+

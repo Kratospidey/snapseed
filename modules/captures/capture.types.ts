@@ -1,0 +1,56 @@
+import { z } from 'zod';
+
+import { CAPTURE_NOTE_MAX_LENGTH } from '@/constants/limits';
+
+export const captureSourceSchemeSchema = z.enum(['content', 'file', 'ph', 'unknown']);
+
+export const createCaptureInputSchema = z.object({
+  mediaAssetId: z.string().trim().min(1).nullable().optional(),
+  sourceUri: z.string().trim().min(1),
+  sourceScheme: captureSourceSchemeSchema,
+  sourceFilename: z.string().trim().min(1).nullable().optional(),
+  mimeType: z.string().trim().min(1).nullable().optional(),
+  capturedAt: z.number().int().nullable().optional(),
+  fileSize: z.number().int().nonnegative().nullable().optional(),
+  width: z.number().int().positive().nullable().optional(),
+  height: z.number().int().positive().nullable().optional(),
+  note: z.string().max(CAPTURE_NOTE_MAX_LENGTH).nullable().optional(),
+  duplicateGroupHint: z.string().trim().min(1).nullable().optional(),
+  tagLabels: z.array(z.string()).default([]),
+  reminder: z
+    .object({
+      dueAt: z.number().int(),
+      localDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      localTime: z.string().regex(/^\d{2}:\d{2}$/),
+      timezone: z.string().trim().min(1),
+    })
+    .nullable()
+    .optional(),
+});
+
+export type CreateCaptureInput = z.infer<typeof createCaptureInputSchema>;
+
+export type CaptureInsertRecord = {
+  capturedAt: number | null;
+  duplicateGroupHint: string | null;
+  fileSize: number | null;
+  height: number | null;
+  id: string;
+  importedAt: number;
+  mediaAssetId: string | null;
+  mimeType: string | null;
+  note: string | null;
+  noteNormalized: string | null;
+  sourceFilename: string | null;
+  sourceScheme: z.infer<typeof captureSourceSchemeSchema>;
+  sourceUri: string;
+  updatedAt: number;
+  width: number | null;
+};
+
+export type CaptureSearchProjection = {
+  captureId: string;
+  noteText: string;
+  tagText: string;
+};
+
