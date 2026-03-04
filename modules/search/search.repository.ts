@@ -105,7 +105,7 @@ export class SearchRepository {
         SELECT capture_search.capture_id AS captureId
         FROM capture_search
         INNER JOIN captures c ON c.id = capture_search.capture_id
-        LEFT JOIN reminders r ON r.capture_id = c.id
+        LEFT JOIN reminders r ON r.capture_id = c.id AND r.status = 'pending'
         WHERE capture_search MATCH ?
           AND c.deleted_at IS NULL
           ${clause ? `AND ${clause}` : ''}

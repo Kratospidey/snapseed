@@ -17,6 +17,27 @@ jest.mock('@react-native-community/datetimepicker', () => {
     return React.createElement(View, props);
   };
 });
+jest.mock('expo-notifications', () => ({
+  AndroidImportance: {
+    DEFAULT: 3,
+  },
+  PermissionStatus: {
+    DENIED: 'denied',
+    GRANTED: 'granted',
+    UNDETERMINED: 'undetermined',
+  },
+  SchedulableTriggerInputTypes: {
+    DATE: 'date',
+  },
+  addNotificationResponseReceivedListener: jest.fn(() => ({
+    remove: jest.fn(),
+  })),
+  cancelScheduledNotificationAsync: jest.fn().mockResolvedValue(undefined),
+  getPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
+  requestPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
+  scheduleNotificationAsync: jest.fn().mockResolvedValue('notification-1'),
+  setNotificationChannelAsync: jest.fn().mockResolvedValue(undefined),
+}));
 jest.mock('react-native-safe-area-context', () => {
   const React = require('react');
   const { View } = require('react-native');

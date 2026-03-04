@@ -209,9 +209,12 @@ export function ImportReviewScreen() {
                   fallbackLabel="Preview unavailable for this Capture"
                   fallbackTestID={`review-preview-fallback-${asset.assetId}`}
                   imageTestID={`review-preview-image-${asset.assetId}`}
+                  mediaAssetId={asset.mediaAssetId}
                   onPress={() => setPreviewAssetId(asset.assetId)}
                   pressable
                   previewUri={asset.previewUri}
+                  sourceScheme={asset.sourceScheme}
+                  sourceUri={asset.sourceUri}
                 />
                 <View style={styles.previewHintOverlay}>
                   <AppText color={colors.surface} variant="caption">
@@ -402,7 +405,10 @@ export function ImportReviewScreen() {
                   fallbackLabel="Preview unavailable for this Capture"
                   fallbackTestID="review-preview-modal-fallback"
                   imageTestID="review-preview-modal-image"
+                  mediaAssetId={previewAsset.mediaAssetId}
                   previewUri={previewAsset.previewUri}
+                  sourceScheme={previewAsset.sourceScheme}
+                  sourceUri={previewAsset.sourceUri}
                 />
                 <AppText color={colors.surface} style={styles.previewModalCaption} variant="caption">
                   {previewAsset.filename ?? 'Capture preview'} · tap outside or close to return

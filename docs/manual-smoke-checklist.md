@@ -34,11 +34,21 @@
 - Enter edit mode.
 - Save tags.
 - Save a note.
-- Save a reminder.
+- Save a reminder with date/time pickers.
+- Mark reminder as done.
+- Snooze reminder by +1h and to tomorrow.
 - Confirm null or missing file size shows as `Unknown`.
 - Use `Open original`.
 - Use `Fullscreen`.
 - Delete the Capture and confirm the UI messaging stays metadata-only.
+
+## Reminders
+
+- Open the Reminders tab and confirm overdue/upcoming sections render.
+- Confirm done reminders are in a collapsed section and can be expanded.
+- Use quick actions (`Done`, `+1h`, `Tomorrow`, `Reschedule`) and confirm state updates.
+- If notification permission is denied, confirm the warning banner appears and in-app reminders still work.
+- Put one reminder in the past and relaunch or foreground the app to confirm auto-snooze to next day same local time.
 
 ## Fullscreen preview
 

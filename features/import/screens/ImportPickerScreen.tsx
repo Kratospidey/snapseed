@@ -323,7 +323,9 @@ export function ImportPickerScreen() {
                       containerStyle={styles.assetImage}
                       fallbackTestID={`picker-preview-fallback-${item.assetId}`}
                       imageTestID={`picker-preview-image-${item.assetId}`}
+                      mediaAssetId={item.assetId}
                       previewUri={item.previewUri}
+                      sourceUri={item.previewUri}
                     />
                     {item.isLikelyScreenshot ? (
                       <View style={styles.screenshotBadge}>

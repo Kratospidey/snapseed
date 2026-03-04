@@ -197,7 +197,7 @@ export class CaptureRepository {
             )
           ) AS tagLabels
         FROM captures c
-        LEFT JOIN reminders r ON r.capture_id = c.id
+        LEFT JOIN reminders r ON r.capture_id = c.id AND r.status = 'pending'
         WHERE c.id = ?
           AND c.deleted_at IS NULL
       `,
@@ -526,7 +526,7 @@ export class CaptureRepository {
           )
         ) AS tagLabels
       FROM captures c
-      LEFT JOIN reminders r ON r.capture_id = c.id
+      LEFT JOIN reminders r ON r.capture_id = c.id AND r.status = 'pending'
     `;
   }
 }

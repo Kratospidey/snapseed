@@ -8,7 +8,10 @@ const mockCaptureService = {
   clearReminder: jest.fn(),
   deleteCaptureMetadata: jest.fn(),
   getCaptureDetail: jest.fn(),
+  markReminderDone: jest.fn(),
   recordCaptureViewed: jest.fn(),
+  snoozeReminderByOneHour: jest.fn(),
+  snoozeReminderToTomorrow: jest.fn(),
   updateNote: jest.fn(),
   updateReminder: jest.fn(),
   updateTags: jest.fn(),
@@ -99,5 +102,28 @@ describe('CaptureDetailScreen', () => {
     await waitFor(() => expect(mockCaptureService.updateNote).toHaveBeenCalledTimes(1));
     expect(screen.queryByText('Loading Capture metadata...')).toBeNull();
     expect(screen.getByText('Open original')).toBeTruthy();
+  });
+
+  it('supports reminder quick actions from detail editing', async () => {
+    const reminderCapture = createCaptureDetail({
+      reminderDueAt: 1_710_000_200_000,
+      reminderLocalDate: '2026-03-06',
+      reminderLocalTime: '09:30',
+    });
+    mockCaptureService.getCaptureDetail.mockResolvedValue(reminderCapture);
+    mockCaptureService.markReminderDone.mockResolvedValue(undefined);
+
+    render(<CaptureDetailScreen />);
+
+    await waitFor(() => expect(screen.getByText('Detail')).toBeTruthy());
+
+    fireEvent.press(screen.getByText('Edit'));
+    expect(screen.getByLabelText('Choose reminder date')).toBeTruthy();
+    expect(screen.getByLabelText('Choose reminder time')).toBeTruthy();
+
+    const doneButtons = screen.getAllByText('Done');
+    fireEvent.press(doneButtons[doneButtons.length - 1]);
+
+    await waitFor(() => expect(mockCaptureService.markReminderDone).toHaveBeenCalledWith(reminderCapture.id));
   });
 });

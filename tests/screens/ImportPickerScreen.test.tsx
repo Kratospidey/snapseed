@@ -3,6 +3,8 @@ const mockRouter = {
   push: jest.fn(),
 };
 
+const mockGetAssetInfoAsync = jest.fn();
+
 const mockImportService = {
   createDraftAsset: jest.fn(),
 };
@@ -22,6 +24,10 @@ jest.mock('expo-sqlite', () => ({
   useSQLiteContext: () => ({}),
 }));
 
+jest.mock('expo-media-library', () => ({
+  getAssetInfoAsync: (...args: unknown[]) => mockGetAssetInfoAsync(...args),
+}));
+
 jest.mock('@/modules/import/import.service', () => ({
   ImportService: jest.fn(() => mockImportService),
 }));
@@ -35,6 +41,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react-nativ
 import { routes } from '@/constants/routes';
 import { useImportDraftStore } from '@/features/import/importDraft.store';
 import { ImportPickerScreen } from '@/features/import/screens/ImportPickerScreen';
+import { clearPreviewUriCache } from '@/modules/media/media-preview';
 import { createImportDraftAsset, createMediaPickerAsset } from '@/tests/support/fixtures';
 
 const grantedPermission = {
@@ -55,6 +62,8 @@ const deniedPermission = {
 
 describe('ImportPickerScreen', () => {
   beforeEach(() => {
+    clearPreviewUriCache();
+    mockGetAssetInfoAsync.mockReset();
     mockImportService.createDraftAsset.mockReset();
     mockMediaGateway.getPermissionState.mockReset();
     mockMediaGateway.loadPhotoAssetsPage.mockReset();
@@ -208,5 +217,29 @@ describe('ImportPickerScreen', () => {
 
     await waitFor(() => expect(screen.getByTestId('picker-preview-fallback-asset-1')).toBeTruthy());
     expect(screen.getByText('Preview unavailable')).toBeTruthy();
+  });
+
+  it('rehydrates ph:// picker thumbnails using media asset info', async () => {
+    const asset = createMediaPickerAsset({ previewUri: 'ph://asset-1' });
+
+    mockGetAssetInfoAsync.mockResolvedValue({
+      localUri: 'file:///picker-resolved.png',
+      uri: 'ph://asset-1',
+    });
+    mockMediaGateway.getPermissionState.mockResolvedValue(grantedPermission);
+    mockMediaGateway.loadPhotoAssetsPage.mockResolvedValue({
+      assets: [asset],
+      endCursor: null,
+      hasNextPage: false,
+      totalCount: 1,
+    });
+
+    render(<ImportPickerScreen />);
+
+    await waitFor(() =>
+      expect(screen.getByTestId('picker-preview-image-asset-1').props.source).toEqual({
+        uri: 'file:///picker-resolved.png',
+      }),
+    );
   });
 });

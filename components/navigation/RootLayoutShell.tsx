@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 
 import { DATABASE_NAME, initializeDatabaseAsync } from '@/db/client';
 import { colors } from '@/theme';
+import { ReminderRuntimeSync } from '@/components/runtime/ReminderRuntimeSync';
 
 export function RootLayoutShell() {
   useEffect(() => {
@@ -28,6 +29,7 @@ export function RootLayoutShell() {
       }}
       onInit={initializeDatabaseAsync}
     >
+      <ReminderRuntimeSync />
       <StatusBar style="dark" />
       <Stack
         initialRouteName="index"

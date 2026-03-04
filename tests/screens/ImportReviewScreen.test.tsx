@@ -115,7 +115,11 @@ describe('ImportReviewScreen', () => {
   });
 
   it('shows an explicit fallback when a selected asset preview is unavailable', async () => {
-    const asset = createImportDraftAsset({ previewUri: null });
+    const asset = createImportDraftAsset({
+      previewUri: null,
+      sourceScheme: 'unknown',
+      sourceUri: '',
+    });
 
     useImportDraftStore.getState().upsertSelectedAsset(asset);
     mockImportService.refreshDuplicateMatches.mockResolvedValue({

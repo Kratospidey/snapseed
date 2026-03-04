@@ -34,6 +34,13 @@ export function DateTimeFieldPicker({
 }: DateTimeFieldPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [draftDate, setDraftDate] = useState<Date>(resolveInitialDate(value, mode));
+  const iosPickerAppearanceProps =
+    Platform.OS === 'ios'
+      ? {
+          textColor: colors.text,
+          themeVariant: 'light' as const,
+        }
+      : undefined;
 
   useEffect(() => {
     if (isOpen) {
@@ -116,6 +123,7 @@ export function DateTimeFieldPicker({
               style={styles.picker}
               testID={testID ? `${testID}-picker` : undefined}
               value={draftDate}
+              {...iosPickerAppearanceProps}
             />
 
             <Pressable accessibilityRole="button" onPress={handleConfirm} style={styles.primaryButton}>

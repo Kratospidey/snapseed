@@ -129,13 +129,25 @@ export class CaptureService {
   }) {
     const dueAt = parseReminderDateTime(input.localDate, input.localTime);
 
-    await this.reminderService.upsertReminder({
+    return this.reminderService.upsertReminder({
       captureId: input.captureId,
       dueAt,
       localDate: input.localDate,
       localTime: input.localTime,
       timezone: input.timezone,
     });
+  }
+
+  async markReminderDone(captureId: string) {
+    await this.reminderService.markDone(captureId);
+  }
+
+  async snoozeReminderByOneHour(captureId: string) {
+    return this.reminderService.snoozeByMinutes(captureId, 60);
+  }
+
+  async snoozeReminderToTomorrow(captureId: string) {
+    return this.reminderService.snoozeToTomorrowSameTime(captureId);
   }
 
   async updateTags(captureId: string, labels: string[]) {

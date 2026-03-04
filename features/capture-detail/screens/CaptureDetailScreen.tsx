@@ -14,6 +14,7 @@ import {
   View,
 } from 'react-native';
 
+import { DateTimeFieldPicker } from '@/components/reminders/DateTimeFieldPicker';
 import { AppText } from '@/components/primitives/AppText';
 import { CAPTURE_NOTE_MAX_LENGTH } from '@/constants/limits';
 import { routes } from '@/constants/routes';
@@ -191,12 +192,13 @@ export function CaptureDetailScreen() {
     setPendingAction('reminder');
 
     try {
-      await captureService.updateReminder({
+      const result = await captureService.updateReminder({
         captureId: capture.id,
         localDate: reminderDateDraft.trim(),
         localTime: reminderTimeDraft.trim(),
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
       });
+      notifyIfSchedulingFailed(result);
       await loadCapture();
     } catch (error) {
       Alert.alert(
@@ -222,6 +224,68 @@ export function CaptureDetailScreen() {
       Alert.alert(
         'Reminder not cleared',
         error instanceof Error ? error.message : 'Unable to remove this reminder.',
+      );
+    } finally {
+      setPendingAction(null);
+    }
+  }, [capture, captureService, loadCapture]);
+
+  const handleMarkReminderDone = useCallback(async () => {
+    if (!capture?.reminderDueAt) {
+      return;
+    }
+
+    setPendingAction('reminder-done');
+
+    try {
+      await captureService.markReminderDone(capture.id);
+      await loadCapture();
+    } catch (error) {
+      Alert.alert(
+        'Reminder not marked done',
+        error instanceof Error ? error.message : 'Unable to mark this reminder as done.',
+      );
+    } finally {
+      setPendingAction(null);
+    }
+  }, [capture, captureService, loadCapture]);
+
+  const handleSnoozeOneHour = useCallback(async () => {
+    if (!capture?.reminderDueAt) {
+      return;
+    }
+
+    setPendingAction('reminder-snooze-hour');
+
+    try {
+      const result = await captureService.snoozeReminderByOneHour(capture.id);
+      notifyIfSchedulingFailed(result);
+      await loadCapture();
+    } catch (error) {
+      Alert.alert(
+        'Reminder not snoozed',
+        error instanceof Error ? error.message : 'Unable to snooze this reminder.',
+      );
+    } finally {
+      setPendingAction(null);
+    }
+  }, [capture, captureService, loadCapture]);
+
+  const handleSnoozeTomorrow = useCallback(async () => {
+    if (!capture?.reminderDueAt) {
+      return;
+    }
+
+    setPendingAction('reminder-snooze-tomorrow');
+
+    try {
+      const result = await captureService.snoozeReminderToTomorrow(capture.id);
+      notifyIfSchedulingFailed(result);
+      await loadCapture();
+    } catch (error) {
+      Alert.alert(
+        'Reminder not snoozed',
+        error instanceof Error ? error.message : 'Unable to snooze this reminder to tomorrow.',
       );
     } finally {
       setPendingAction(null);
@@ -397,26 +461,26 @@ export function CaptureDetailScreen() {
                 {isEditing ? (
                   <View style={styles.editorCard}>
                     <View style={styles.reminderInputsRow}>
-                      <TextInput
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                        keyboardType="numbers-and-punctuation"
-                        onChangeText={setReminderDateDraft}
-                        placeholder="YYYY-MM-DD"
-                        placeholderTextColor={colors.textMuted}
-                        style={[styles.textInput, styles.reminderInput]}
-                        value={reminderDateDraft}
-                      />
-                      <TextInput
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                        keyboardType="numbers-and-punctuation"
-                        onChangeText={setReminderTimeDraft}
-                        placeholder="HH:MM"
-                        placeholderTextColor={colors.textMuted}
-                        style={[styles.textInput, styles.reminderInput]}
-                        value={reminderTimeDraft}
-                      />
+                      <View style={styles.reminderInput}>
+                        <DateTimeFieldPicker
+                          accessibilityLabel="Choose reminder date"
+                          label="Date"
+                          mode="date"
+                          onChangeValue={setReminderDateDraft}
+                          placeholder="YYYY-MM-DD"
+                          value={reminderDateDraft}
+                        />
+                      </View>
+                      <View style={styles.reminderInput}>
+                        <DateTimeFieldPicker
+                          accessibilityLabel="Choose reminder time"
+                          label="Time"
+                          mode="time"
+                          onChangeValue={setReminderTimeDraft}
+                          placeholder="HH:MM"
+                          value={reminderTimeDraft}
+                        />
+                      </View>
                     </View>
                     <View style={styles.inlineButtonRow}>
                       <SectionButton
@@ -425,6 +489,40 @@ export function CaptureDetailScreen() {
                         label="Save reminder"
                         onPress={() => void handleSaveReminder()}
                       />
+                      {capture.reminderDueAt ? (
+                        <>
+                          <Pressable
+                            accessibilityRole="button"
+                            disabled={pendingAction !== null}
+                            onPress={() => void handleMarkReminderDone()}
+                            style={styles.secondaryButton}
+                          >
+                            <AppText variant="action">
+                              {pendingAction === 'reminder-done' ? 'Saving...' : 'Done'}
+                            </AppText>
+                          </Pressable>
+                          <Pressable
+                            accessibilityRole="button"
+                            disabled={pendingAction !== null}
+                            onPress={() => void handleSnoozeOneHour()}
+                            style={styles.secondaryButton}
+                          >
+                            <AppText variant="action">
+                              {pendingAction === 'reminder-snooze-hour' ? 'Saving...' : 'Snooze +1h'}
+                            </AppText>
+                          </Pressable>
+                          <Pressable
+                            accessibilityRole="button"
+                            disabled={pendingAction !== null}
+                            onPress={() => void handleSnoozeTomorrow()}
+                            style={styles.secondaryButton}
+                          >
+                            <AppText variant="action">
+                              {pendingAction === 'reminder-snooze-tomorrow' ? 'Saving...' : 'Snooze tomorrow'}
+                            </AppText>
+                          </Pressable>
+                        </>
+                      ) : null}
                       {capture.reminderDueAt ? (
                         <Pressable
                           accessibilityRole="button"
@@ -493,6 +591,25 @@ function formatTimestamp(value: number) {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(value);
+}
+
+function notifyIfSchedulingFailed(result: unknown) {
+  if (!result || typeof result !== 'object') {
+    return;
+  }
+
+  const scheduling = result as { reason?: string; scheduled?: boolean };
+
+  if (scheduling.scheduled) {
+    return;
+  }
+
+  if (scheduling.reason === 'permission-denied') {
+    Alert.alert(
+      'Notifications disabled',
+      'Reminder data was saved, but system notifications are currently disabled for SnapBrain.',
+    );
+  }
 }
 
 function formatDimensions(width: number | null, height: number | null) {
