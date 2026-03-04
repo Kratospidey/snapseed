@@ -17,7 +17,12 @@ export function LibraryGridCard({ item, onPress }: LibraryGridCardProps) {
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={styles.card}>
       <View style={styles.thumbnailWrap}>
-        <CapturePreviewImage isMissing={item.isMissing === 1} sourceUri={item.sourceUri} />
+        <CapturePreviewImage
+          isMissing={item.isMissing === 1}
+          mediaAssetId={item.mediaAssetId}
+          sourceScheme={item.sourceScheme}
+          sourceUri={item.sourceUri}
+        />
         <View style={styles.badgeOverlay}>
           {item.isMissing === 1 ? <MetaBadge label="Missing" tone="danger" /> : null}
           {item.reminderDueAt ? <MetaBadge label="Reminder" tone="accent" /> : null}

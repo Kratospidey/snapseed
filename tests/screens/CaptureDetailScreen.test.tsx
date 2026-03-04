@@ -37,7 +37,7 @@ jest.mock('@/modules/captures/capture.service', () => ({
 }));
 
 import { Alert } from 'react-native';
-import { render, screen, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 import { CaptureDetailScreen } from '@/features/capture-detail/screens/CaptureDetailScreen';
 
@@ -80,5 +80,24 @@ describe('CaptureDetailScreen', () => {
     render(<CaptureDetailScreen />);
 
     await waitFor(() => expect(screen.getByText('Capture not found')).toBeTruthy());
+  });
+
+  it('keeps detail content mounted during post-save refreshes', async () => {
+    mockCaptureService.getCaptureDetail
+      .mockResolvedValueOnce(createCaptureDetail({ note: 'Initial note' }))
+      .mockResolvedValueOnce(createCaptureDetail({ note: 'Updated note' }));
+    mockCaptureService.updateNote.mockResolvedValue(undefined);
+
+    render(<CaptureDetailScreen />);
+
+    await waitFor(() => expect(screen.getByText('Detail')).toBeTruthy());
+
+    fireEvent.press(screen.getByText('Edit'));
+    fireEvent.changeText(screen.getByPlaceholderText('Add a note for this Capture'), 'Updated note');
+    fireEvent.press(screen.getByText('Save note'));
+
+    await waitFor(() => expect(mockCaptureService.updateNote).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText('Loading Capture metadata...')).toBeNull();
+    expect(screen.getByText('Open original')).toBeTruthy();
   });
 });

@@ -17,7 +17,12 @@ export function LibraryListRow({ item, onPress }: LibraryListRowProps) {
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={styles.row}>
       <View style={styles.thumbnailWrap}>
-        <CapturePreviewImage isMissing={item.isMissing === 1} sourceUri={item.sourceUri} />
+        <CapturePreviewImage
+          isMissing={item.isMissing === 1}
+          mediaAssetId={item.mediaAssetId}
+          sourceScheme={item.sourceScheme}
+          sourceUri={item.sourceUri}
+        />
       </View>
 
       <View style={styles.content}>

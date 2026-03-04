@@ -10,6 +10,7 @@ import {
   ScrollView,
   StyleSheet,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 
@@ -21,6 +22,7 @@ import { colors, spacing, typography } from '@/theme';
 
 import {
   formatCaptureFileSize,
+  getCapturePreviewHeight,
   getOpenOriginalDecision,
   splitTagDraft,
 } from '../captureDetail.helpers';
@@ -32,6 +34,7 @@ export function CaptureDetailScreen() {
   const { captureId } = useLocalSearchParams<{ captureId?: string }>();
   const router = useRouter();
   const db = useSQLiteContext();
+  const viewport = useWindowDimensions();
   const captureService = useMemo(() => new CaptureService(db), [db]);
   const [capture, setCapture] = useState<Awaited<ReturnType<CaptureService['getCaptureDetail']>> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -52,7 +55,7 @@ export function CaptureDetailScreen() {
     [],
   );
 
-  const loadCapture = useCallback(async () => {
+  const loadCapture = useCallback(async (options?: { showLoadingState?: boolean }) => {
     if (!captureId) {
       setCapture(null);
       syncDrafts(null);
@@ -60,7 +63,10 @@ export function CaptureDetailScreen() {
       return;
     }
 
-    setIsLoading(true);
+    if (options?.showLoadingState) {
+      setIsLoading(true);
+    }
+
     const nextCapture = await captureService.getCaptureDetail(captureId);
     setCapture(nextCapture);
     syncDrafts(nextCapture);
@@ -68,7 +74,7 @@ export function CaptureDetailScreen() {
   }, [captureId, captureService, syncDrafts]);
 
   useEffect(() => {
-    void loadCapture();
+    void loadCapture({ showLoadingState: true });
   }, [loadCapture]);
 
   useFocusEffect(
@@ -234,6 +240,19 @@ export function CaptureDetailScreen() {
     });
   }, [capture, syncDrafts]);
 
+  const previewHeight = useMemo(
+    () =>
+      getCapturePreviewHeight({
+        previewWidth: Math.max(240, viewport.width - spacing.lg * 2),
+        sourceHeight: capture?.height ?? null,
+        sourceWidth: capture?.width ?? null,
+        viewportHeight: viewport.height,
+      }),
+    [capture?.height, capture?.width, viewport.height, viewport.width],
+  );
+
+  const showLoadingState = isLoading && !capture;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -252,7 +271,7 @@ export function CaptureDetailScreen() {
           </View>
         </View>
 
-        {isLoading ? (
+        {showLoadingState ? (
           <View style={styles.placeholderCard}>
             <AppText color={colors.textMuted}>Loading Capture metadata...</AppText>
           </View>
@@ -261,9 +280,15 @@ export function CaptureDetailScreen() {
             <Pressable
               accessibilityRole="button"
               onPress={() => router.push(routes.capturePreview(capture.id))}
-              style={styles.previewCard}
+              style={[styles.previewCard, { height: previewHeight }]}
             >
-              <CapturePreviewImage isMissing={capture.isMissing} sourceUri={capture.sourceUri} />
+              <CapturePreviewImage
+                fit="contain"
+                isMissing={capture.isMissing}
+                mediaAssetId={capture.mediaAssetId}
+                sourceScheme={capture.sourceScheme}
+                sourceUri={capture.sourceUri}
+              />
               <View style={styles.previewOverlay}>
                 <AppText style={styles.previewAction} variant="action">
                   Open Fullscreen Preview
@@ -639,11 +664,11 @@ const styles = StyleSheet.create({
     color: colors.surface,
   },
   previewCard: {
+    alignSelf: 'stretch',
     backgroundColor: colors.surface,
     borderColor: colors.border,
     borderRadius: 28,
     borderWidth: 1,
-    minHeight: 320,
     overflow: 'hidden',
   },
   previewOverlay: {

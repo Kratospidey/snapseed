@@ -9,15 +9,17 @@ export function buildFtsQuery(normalizedQuery: string) {
 }
 
 export function getSourceScheme(sourceUri: string) {
-  if (sourceUri.startsWith('content://')) {
+  const normalizedUri = sourceUri.trim().toLocaleLowerCase();
+
+  if (normalizedUri.startsWith('content://')) {
     return 'content' as const;
   }
 
-  if (sourceUri.startsWith('file://')) {
+  if (normalizedUri.startsWith('file://')) {
     return 'file' as const;
   }
 
-  if (sourceUri.startsWith('ph://')) {
+  if (normalizedUri.startsWith('ph://')) {
     return 'ph' as const;
   }
 
@@ -51,4 +53,3 @@ export function stripNilStrings(values: string[]) {
 function escapeFtsTerm(term: string) {
   return term.replace(/["']/g, '');
 }
-

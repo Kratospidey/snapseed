@@ -63,7 +63,13 @@ export function CapturePreviewScreen() {
               style={styles.zoomScroll}
             >
               <View style={styles.previewFrame}>
-                <CapturePreviewImage isMissing={capture.isMissing} sourceUri={capture.sourceUri} />
+                <CapturePreviewImage
+                  fit="contain"
+                  isMissing={capture.isMissing}
+                  mediaAssetId={capture.mediaAssetId}
+                  sourceScheme={capture.sourceScheme}
+                  sourceUri={capture.sourceUri}
+                />
               </View>
             </ScrollView>
             <AppText color={colors.surface} style={styles.caption} variant="caption">
@@ -102,7 +108,7 @@ const styles = StyleSheet.create({
   previewFrame: {
     aspectRatio: 0.72,
     borderRadius: 28,
-    minHeight: 520,
+    minHeight: 440,
     overflow: 'hidden',
     width: '100%',
   },

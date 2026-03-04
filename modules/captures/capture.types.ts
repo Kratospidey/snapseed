@@ -88,12 +88,14 @@ export type CaptureDetailRecord = {
   id: string;
   importedAt: number;
   isMissing: boolean;
+  mediaAssetId: string | null;
   note: string | null;
   reminderDueAt: number | null;
   reminderLocalDate: string | null;
   reminderLocalTime: string | null;
   reminderTimezone: string | null;
   sourceFilename: string | null;
+  sourceScheme: z.infer<typeof captureSourceSchemeSchema>;
   sourceUri: string;
   tags: string[];
   width: number | null;
@@ -105,9 +107,11 @@ export type LibraryCaptureRecord = {
   id: string;
   importedAt: number;
   isMissing: DatabaseBoolean;
+  mediaAssetId: string | null;
   note: string | null;
   reminderDueAt: number | null;
   sourceFilename: string | null;
+  sourceScheme: z.infer<typeof captureSourceSchemeSchema>;
   sourceUri: string;
   tagCount: number;
   tagLabels: string[];

@@ -102,7 +102,7 @@ export class SearchRepository {
     const { clause, params: filterParams } = buildSearchFilterClause(params.filters);
     const rows = await this.db.getAllAsync<{ captureId: string }>(
       `
-        SELECT capture_id AS captureId
+        SELECT capture_search.capture_id AS captureId
         FROM capture_search
         INNER JOIN captures c ON c.id = capture_search.capture_id
         LEFT JOIN reminders r ON r.capture_id = c.id

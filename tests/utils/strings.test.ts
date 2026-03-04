@@ -17,6 +17,7 @@ describe('strings utilities', () => {
     expect(getSourceScheme('content://media/external/images/1')).toBe('content');
     expect(getSourceScheme('file:///tmp/capture.png')).toBe('file');
     expect(getSourceScheme('ph://abc')).toBe('ph');
+    expect(getSourceScheme('  PH://ABC  ')).toBe('ph');
     expect(getSourceScheme('https://example.com/capture.png')).toBe('unknown');
   });
 });

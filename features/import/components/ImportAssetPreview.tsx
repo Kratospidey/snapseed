@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { Image } from 'expo-image';
+import { useEffect, useMemo, useState } from 'react';
+import { Image as NativeImage, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 
 import { AppText } from '@/components/primitives/AppText';
 import { colors } from '@/theme';
+import { getSourceScheme } from '@/utils/strings';
 
 type ImportAssetPreviewProps = {
   accessibilityLabel?: string;
@@ -33,16 +34,31 @@ export function ImportAssetPreview({
     setHasLoadError(false);
   }, [normalizedUri]);
 
+  const renderer = useMemo(() => {
+    const scheme = normalizedUri ? getSourceScheme(normalizedUri) : 'unknown';
+    return scheme === 'ph' ? 'native' : 'expo-image';
+  }, [normalizedUri]);
+
   const content = (
     <View style={[styles.container, containerStyle]}>
       {normalizedUri && !hasLoadError ? (
-        <Image
-          contentFit="cover"
-          onError={() => setHasLoadError(true)}
-          source={{ uri: normalizedUri }}
-          style={styles.image}
-          testID={imageTestID}
-        />
+        renderer === 'native' ? (
+          <NativeImage
+            onError={() => setHasLoadError(true)}
+            resizeMode="cover"
+            source={{ uri: normalizedUri }}
+            style={styles.image}
+            testID={imageTestID}
+          />
+        ) : (
+          <ExpoImage
+            contentFit="cover"
+            onError={() => setHasLoadError(true)}
+            source={{ uri: normalizedUri }}
+            style={styles.image}
+            testID={imageTestID}
+          />
+        )
       ) : (
         <View style={styles.fallback} testID={fallbackTestID}>
           <AppText color={colors.textMuted} variant="caption">

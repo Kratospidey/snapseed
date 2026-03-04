@@ -147,28 +147,32 @@ export class CaptureRepository {
   }
 
   async getDetailById(captureId: string) {
-    const row = await this.db.getFirstAsync<{
-      capturedAt: number | null;
-      duplicateGroupHint: string | null;
-      fileSize: number | null;
-      height: number | null;
-      id: string;
-      importedAt: number;
-      isMissing: number;
-      note: string | null;
-      reminderDueAt: number | null;
-      reminderLocalDate: string | null;
-      reminderLocalTime: string | null;
-      reminderTimezone: string | null;
-      sourceFilename: string | null;
-      sourceUri: string;
-      tagLabels: string | null;
-      width: number | null;
-    }>(
-      `
+      const row = await this.db.getFirstAsync<{
+        capturedAt: number | null;
+        duplicateGroupHint: string | null;
+        fileSize: number | null;
+        height: number | null;
+        id: string;
+        importedAt: number;
+        isMissing: number;
+        mediaAssetId: string | null;
+        note: string | null;
+        reminderDueAt: number | null;
+        reminderLocalDate: string | null;
+        reminderLocalTime: string | null;
+        reminderTimezone: string | null;
+        sourceFilename: string | null;
+        sourceScheme: CaptureDetailRecord['sourceScheme'];
+        sourceUri: string;
+        tagLabels: string | null;
+        width: number | null;
+      }>(
+        `
         SELECT
           c.id,
+          c.media_asset_id AS mediaAssetId,
           c.source_uri AS sourceUri,
+          c.source_scheme AS sourceScheme,
           c.source_filename AS sourceFilename,
           c.imported_at AS importedAt,
           c.captured_at AS capturedAt,
@@ -212,12 +216,14 @@ export class CaptureRepository {
       id: row.id,
       importedAt: row.importedAt,
       isMissing: row.isMissing === 1,
+      mediaAssetId: row.mediaAssetId,
       note: row.note,
       reminderDueAt: row.reminderDueAt,
       reminderLocalDate: row.reminderLocalDate,
       reminderLocalTime: row.reminderLocalTime,
       reminderTimezone: row.reminderTimezone,
       sourceFilename: row.sourceFilename,
+      sourceScheme: row.sourceScheme,
       sourceUri: row.sourceUri,
       tags: splitTagLabels(row.tagLabels),
       width: row.width,
@@ -493,7 +499,9 @@ export class CaptureRepository {
     return `
       SELECT
         c.id,
+        c.media_asset_id AS mediaAssetId,
         c.source_uri AS sourceUri,
+        c.source_scheme AS sourceScheme,
         c.source_filename AS sourceFilename,
         c.imported_at AS importedAt,
         c.captured_at AS capturedAt,
@@ -529,9 +537,11 @@ type LibraryCaptureRow = {
   id: string;
   importedAt: number;
   isMissing: 0 | 1;
+  mediaAssetId: string | null;
   note: string | null;
   reminderDueAt: number | null;
   sourceFilename: string | null;
+  sourceScheme: LibraryCaptureRecord['sourceScheme'];
   sourceUri: string;
   tagCount: number;
   tagLabels: string | null;
@@ -544,9 +554,11 @@ function mapLibraryCaptureRow(row: LibraryCaptureRow) {
     id: row.id,
     importedAt: row.importedAt,
     isMissing: row.isMissing,
+    mediaAssetId: row.mediaAssetId,
     note: row.note,
     reminderDueAt: row.reminderDueAt,
     sourceFilename: row.sourceFilename,
+    sourceScheme: row.sourceScheme,
     sourceUri: row.sourceUri,
     tagCount: row.tagCount,
     tagLabels: splitTagLabels(row.tagLabels),
