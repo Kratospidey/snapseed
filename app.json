@@ -8,7 +8,17 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "SnapBrain needs photo access so you can choose screenshots to import as Captures.",
+          "savePhotosPermission": "SnapBrain can save media only when you explicitly choose export or backup flows.",
+          "granularPermissions": [
+            "photo"
+          ]
+        }
+      ]
     ],
     "ios": {
       "supportsTablet": true
@@ -23,4 +33,3 @@
     }
   }
 }
-

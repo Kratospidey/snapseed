@@ -1,3 +1,3 @@
-import { LibraryScreen } from '@/features/library/screens/LibraryScreen';
+import { LibraryRouteScreen } from '@/features/library/screens/LibraryRouteScreen';
 
-export default LibraryScreen;
+export default LibraryRouteScreen;

@@ -22,6 +22,10 @@ export class ReminderService {
     this.reminderRepository = new ReminderRepository(db);
   }
 
+  async clearReminder(captureId: string) {
+    await this.reminderRepository.deleteByCaptureId(captureId);
+  }
+
   async upsertReminder(input: UpsertReminderInput) {
     const parsed = upsertReminderInputSchema.parse(input);
     const now = Date.now();
@@ -39,4 +43,3 @@ export class ReminderService {
     });
   }
 }
-

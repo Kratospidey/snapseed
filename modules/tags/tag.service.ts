@@ -15,8 +15,48 @@ export class TagService {
     this.tagRepository = new TagRepository(db);
   }
 
+  async createTag(label: string) {
+    const normalizedLabel = normalizeTagLabel(label);
+
+    if (!normalizedLabel) {
+      throw new Error('Tag label is required');
+    }
+
+    const existing = await this.tagRepository.findByCanonicalLabel(normalizedLabel);
+
+    if (existing) {
+      return existing.id;
+    }
+
+    const now = Date.now();
+    const tagId = createId('tag');
+
+    await this.tagRepository.upsert({
+      canonicalLabel: normalizedLabel,
+      createdAt: now,
+      id: tagId,
+      label: normalizedLabel,
+      lastUsedAt: null,
+      updatedAt: now,
+    });
+
+    return tagId;
+  }
+
   async deleteTag(tagId: string) {
+    const captureIds = await this.tagRepository.listCaptureIds(tagId);
+
     await this.tagRepository.deleteTag(tagId);
+
+    await Promise.all(captureIds.map((captureId) => this.searchService.reindexCapture(captureId)));
+  }
+
+  async getById(tagId: string) {
+    return this.tagRepository.getById(tagId);
+  }
+
+  async listAll() {
+    return this.tagRepository.listAll();
   }
 
   async getUsageSummary(limit: number = 5) {
@@ -25,15 +65,23 @@ export class TagService {
 
   async renameOrMergeTag(tagId: string, nextLabel: string) {
     const normalizedLabel = normalizeTagLabel(nextLabel);
+
+    if (!normalizedLabel) {
+      throw new Error('Tag label is required');
+    }
+
+    const captureIds = await this.tagRepository.listCaptureIds(tagId);
     const existing = await this.tagRepository.findByCanonicalLabel(normalizedLabel);
     const now = Date.now();
 
     if (existing && existing.id !== tagId) {
       await this.tagRepository.mergeTags(tagId, existing.id, now);
+      await Promise.all(captureIds.map((captureId) => this.searchService.reindexCapture(captureId)));
       return existing.id;
     }
 
     await this.tagRepository.renameTag(tagId, normalizedLabel, normalizedLabel, now);
+    await Promise.all(captureIds.map((captureId) => this.searchService.reindexCapture(captureId)));
     return tagId;
   }
 

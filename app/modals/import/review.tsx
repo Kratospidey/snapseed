@@ -1,3 +1,3 @@
-import { ImportReviewScreen } from '@/features/import/screens/ImportReviewScreen';
+import { ImportReviewRouteScreen } from '@/features/import/screens/ImportReviewRouteScreen';
 
-export default ImportReviewScreen;
+export default ImportReviewRouteScreen;

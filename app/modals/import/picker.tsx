@@ -1,3 +1,3 @@
-import { ImportPickerScreen } from '@/features/import/screens/ImportPickerScreen';
+import { ImportPickerRouteScreen } from '@/features/import/screens/ImportPickerRouteScreen';
 
-export default ImportPickerScreen;
+export default ImportPickerRouteScreen;

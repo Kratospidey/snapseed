@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, SafeAreaView, StyleSheet, View } from 'react-native';
+import { Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/primitives/AppText';
 import { CaptureService } from '@/modules/captures/capture.service';
@@ -52,11 +52,22 @@ export function CapturePreviewScreen() {
       <View style={styles.content}>
         {capture ? (
           <>
-            <View style={styles.previewFrame}>
-              <CapturePreviewImage isMissing={capture.isMissing} sourceUri={capture.sourceUri} />
-            </View>
+            <ScrollView
+              bouncesZoom={false}
+              centerContent
+              contentContainerStyle={styles.zoomContent}
+              maximumZoomScale={4}
+              minimumZoomScale={1}
+              showsHorizontalScrollIndicator={false}
+              showsVerticalScrollIndicator={false}
+              style={styles.zoomScroll}
+            >
+              <View style={styles.previewFrame}>
+                <CapturePreviewImage isMissing={capture.isMissing} sourceUri={capture.sourceUri} />
+              </View>
+            </ScrollView>
             <AppText color={colors.surface} style={styles.caption} variant="caption">
-              {capture.sourceFilename ?? 'Capture preview'}
+              {capture.sourceFilename ?? 'Capture preview'} · pinch to zoom
             </AppText>
           </>
         ) : (
@@ -89,13 +100,22 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   previewFrame: {
+    aspectRatio: 0.72,
     borderRadius: 28,
-    flex: 1,
-    maxHeight: '88%',
+    minHeight: 520,
     overflow: 'hidden',
+    width: '100%',
   },
   safeArea: {
     backgroundColor: colors.text,
+    flex: 1,
+  },
+  zoomContent: {
+    alignItems: 'center',
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+  zoomScroll: {
     flex: 1,
   },
 });

@@ -55,6 +55,18 @@ export type CaptureSearchProjection = {
   tagText: string;
 };
 
+export type ImportDuplicateCandidateRecord = {
+  capturedAt: number | null;
+  duplicateGroupHint: string | null;
+  id: string;
+  importedAt: number;
+  mediaAssetId: string | null;
+  sourceFilename: string | null;
+  sourceUri: string;
+  height: number | null;
+  width: number | null;
+};
+
 export const librarySmartViewSchema = z.enum(['graveyard', 'recent', 'reminders', 'unsorted']);
 export const librarySortOptionSchema = z.enum([
   'captured_asc',
@@ -71,14 +83,20 @@ export type LibrarySortOption = z.infer<typeof librarySortOptionSchema>;
 export type CaptureDetailRecord = {
   capturedAt: number | null;
   duplicateGroupHint: string | null;
+  fileSize: number | null;
+  height: number | null;
   id: string;
   importedAt: number;
   isMissing: boolean;
   note: string | null;
   reminderDueAt: number | null;
+  reminderLocalDate: string | null;
+  reminderLocalTime: string | null;
+  reminderTimezone: string | null;
   sourceFilename: string | null;
   sourceUri: string;
   tags: string[];
+  width: number | null;
 };
 
 export type LibraryCaptureRecord = {

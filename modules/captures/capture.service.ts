@@ -85,6 +85,10 @@ export class CaptureService {
     return this.captureRepository.getDetailById(captureId);
   }
 
+  async getCapturesForTag(tagId: string, limit?: number) {
+    return this.captureRepository.listByTagId(tagId, limit);
+  }
+
   async getLibraryFeed(input: { limit?: number; smartView: LibrarySmartView; sort: LibrarySortOption }) {
     return this.captureRepository.listLibraryFeed({
       limit: input.limit,
@@ -97,10 +101,54 @@ export class CaptureService {
     return this.captureRepository.getSmartCounts();
   }
 
+  async clearReminder(captureId: string) {
+    await this.reminderService.clearReminder(captureId);
+  }
+
+  async deleteCaptureMetadata(captureId: string) {
+    await this.captureRepository.deleteById(captureId);
+    await this.searchService.reindexCapture(captureId);
+  }
+
+  async recordCaptureViewed(captureId: string) {
+    await this.captureRepository.touchLastViewed(captureId, Date.now());
+  }
+
   async updateNote(captureId: string, note: string | null) {
     const normalizedNote = normalizeNote(note);
 
     await this.captureRepository.updateNote(captureId, normalizedNote, normalizedNote, Date.now());
     await this.searchService.reindexCapture(captureId);
   }
+
+  async updateReminder(input: {
+    captureId: string;
+    localDate: string;
+    localTime: string;
+    timezone: string;
+  }) {
+    const dueAt = parseReminderDateTime(input.localDate, input.localTime);
+
+    await this.reminderService.upsertReminder({
+      captureId: input.captureId,
+      dueAt,
+      localDate: input.localDate,
+      localTime: input.localTime,
+      timezone: input.timezone,
+    });
+  }
+
+  async updateTags(captureId: string, labels: string[]) {
+    await this.tagService.replaceCaptureTags(captureId, labels, Date.now());
+  }
+}
+
+function parseReminderDateTime(localDate: string, localTime: string) {
+  const parsed = new Date(`${localDate}T${localTime}:00`);
+
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error('Invalid reminder date/time');
+  }
+
+  return parsed.getTime();
 }

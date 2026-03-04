@@ -52,6 +52,32 @@ export class TagRepository {
     );
   }
 
+  async getById(tagId: string) {
+    return (
+      (await this.db.getFirstAsync<
+        TagRecord & {
+          captureCount: number;
+        }
+      >(
+        `
+          SELECT
+            t.id,
+            t.label,
+            t.canonical_label AS canonicalLabel,
+            t.created_at AS createdAt,
+            t.updated_at AS updatedAt,
+            t.last_used_at AS lastUsedAt,
+            COUNT(ct.capture_id) AS captureCount
+          FROM tags t
+          LEFT JOIN capture_tags ct ON ct.tag_id = t.id
+          WHERE t.id = ?
+          GROUP BY t.id
+        `,
+        tagId,
+      )) ?? null
+    );
+  }
+
   async listAll() {
     return this.db.getAllAsync<
       TagRecord & {
@@ -71,6 +97,19 @@ export class TagRepository {
       GROUP BY t.id
       ORDER BY t.last_used_at DESC, t.label ASC
     `);
+  }
+
+  async listCaptureIds(tagId: string) {
+    const rows = await this.db.getAllAsync<{ captureId: string }>(
+      `
+        SELECT capture_id AS captureId
+        FROM capture_tags
+        WHERE tag_id = ?
+      `,
+      tagId,
+    );
+
+    return rows.map((row) => row.captureId);
   }
 
   async getUsageSummary(limit: number) {

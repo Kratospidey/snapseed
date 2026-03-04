@@ -1,3 +1,3 @@
-import { CapturePreviewScreen } from '@/features/capture-detail/screens/CapturePreviewScreen';
+import { CapturePreviewRouteScreen } from '@/features/capture-detail/screens/CapturePreviewRouteScreen';
 
-export default CapturePreviewScreen;
+export default CapturePreviewRouteScreen;

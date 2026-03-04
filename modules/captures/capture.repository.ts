@@ -2,6 +2,7 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 
 import type {
   CaptureDetailRecord,
+  ImportDuplicateCandidateRecord,
   CaptureSearchProjection,
   CaptureInsertRecord,
   LibraryCaptureRecord,
@@ -45,6 +46,61 @@ export class CaptureRepository {
     );
 
     return row ?? null;
+  }
+
+  async findPotentialDuplicates(params: {
+    duplicateGroupHint: string | null;
+    mediaAssetId: string | null;
+    sourceFilename: string | null;
+    sourceUri: string;
+  }) {
+    const clauses: string[] = [];
+    const args: Array<string> = [];
+
+    if (params.mediaAssetId) {
+      clauses.push('media_asset_id = ?');
+      args.push(params.mediaAssetId);
+    }
+
+    if (params.sourceUri) {
+      clauses.push('source_uri = ?');
+      args.push(params.sourceUri);
+    }
+
+    if (params.duplicateGroupHint) {
+      clauses.push('duplicate_group_hint = ?');
+      args.push(params.duplicateGroupHint);
+    }
+
+    if (params.sourceFilename) {
+      clauses.push('source_filename = ?');
+      args.push(params.sourceFilename);
+    }
+
+    if (clauses.length === 0) {
+      return [] satisfies ImportDuplicateCandidateRecord[];
+    }
+
+    return this.db.getAllAsync<ImportDuplicateCandidateRecord>(
+      `
+        SELECT
+          id,
+          media_asset_id AS mediaAssetId,
+          source_uri AS sourceUri,
+          source_filename AS sourceFilename,
+          imported_at AS importedAt,
+          captured_at AS capturedAt,
+          width,
+          height,
+          duplicate_group_hint AS duplicateGroupHint
+        FROM captures
+        WHERE deleted_at IS NULL
+          AND (${clauses.join(' OR ')})
+        ORDER BY imported_at DESC
+        LIMIT 12
+      `,
+      ...args,
+    );
   }
 
   async getSmartCounts() {
@@ -92,14 +148,20 @@ export class CaptureRepository {
     const row = await this.db.getFirstAsync<{
       capturedAt: number | null;
       duplicateGroupHint: string | null;
+      fileSize: number | null;
+      height: number | null;
       id: string;
       importedAt: number;
       isMissing: number;
       note: string | null;
       reminderDueAt: number | null;
+      reminderLocalDate: string | null;
+      reminderLocalTime: string | null;
+      reminderTimezone: string | null;
       sourceFilename: string | null;
       sourceUri: string;
       tagLabels: string | null;
+      width: number | null;
     }>(
       `
         SELECT
@@ -108,10 +170,16 @@ export class CaptureRepository {
           c.source_filename AS sourceFilename,
           c.imported_at AS importedAt,
           c.captured_at AS capturedAt,
+          c.file_size AS fileSize,
+          c.width,
+          c.height,
           c.note,
           c.is_missing AS isMissing,
           c.duplicate_group_hint AS duplicateGroupHint,
           r.due_at AS reminderDueAt,
+          r.local_date AS reminderLocalDate,
+          r.local_time AS reminderLocalTime,
+          r.timezone AS reminderTimezone,
           (
             SELECT GROUP_CONCAT(label, '${TAG_SEPARATOR}')
             FROM (
@@ -137,15 +205,90 @@ export class CaptureRepository {
     return {
       capturedAt: row.capturedAt,
       duplicateGroupHint: row.duplicateGroupHint,
+      fileSize: row.fileSize,
+      height: row.height,
       id: row.id,
       importedAt: row.importedAt,
       isMissing: row.isMissing === 1,
       note: row.note,
       reminderDueAt: row.reminderDueAt,
+      reminderLocalDate: row.reminderLocalDate,
+      reminderLocalTime: row.reminderLocalTime,
+      reminderTimezone: row.reminderTimezone,
       sourceFilename: row.sourceFilename,
       sourceUri: row.sourceUri,
       tags: splitTagLabels(row.tagLabels),
+      width: row.width,
     } satisfies CaptureDetailRecord;
+  }
+
+  async listByTagId(tagId: string, limit: number = 120) {
+    const rows = await this.db.getAllAsync<{
+      capturedAt: number | null;
+      duplicateGroupHint: string | null;
+      id: string;
+      importedAt: number;
+      isMissing: 0 | 1;
+      note: string | null;
+      reminderDueAt: number | null;
+      sourceFilename: string | null;
+      sourceUri: string;
+      tagCount: number;
+      tagLabels: string | null;
+    }>(
+      `
+        SELECT
+          c.id,
+          c.source_uri AS sourceUri,
+          c.source_filename AS sourceFilename,
+          c.imported_at AS importedAt,
+          c.captured_at AS capturedAt,
+          c.note,
+          c.is_missing AS isMissing,
+          c.duplicate_group_hint AS duplicateGroupHint,
+          r.due_at AS reminderDueAt,
+          (
+            SELECT COUNT(*)
+            FROM capture_tags ct_count
+            WHERE ct_count.capture_id = c.id
+          ) AS tagCount,
+          (
+            SELECT GROUP_CONCAT(label, '${TAG_SEPARATOR}')
+            FROM (
+              SELECT t.label AS label
+              FROM capture_tags ct_labels
+              INNER JOIN tags t ON t.id = ct_labels.tag_id
+              WHERE ct_labels.capture_id = c.id
+              ORDER BY t.last_used_at DESC, t.label ASC
+              LIMIT 2
+            )
+          ) AS tagLabels
+        FROM captures c
+        INNER JOIN capture_tags ct ON ct.capture_id = c.id
+        LEFT JOIN reminders r ON r.capture_id = c.id
+        WHERE c.deleted_at IS NULL
+          AND ct.tag_id = ?
+        GROUP BY c.id
+        ORDER BY COALESCE(c.captured_at, c.imported_at) DESC, c.imported_at DESC, c.id DESC
+        LIMIT ?
+      `,
+      tagId,
+      limit,
+    );
+
+    return rows.map((row) => ({
+      capturedAt: row.capturedAt,
+      duplicateGroupHint: row.duplicateGroupHint,
+      id: row.id,
+      importedAt: row.importedAt,
+      isMissing: row.isMissing,
+      note: row.note,
+      reminderDueAt: row.reminderDueAt,
+      sourceFilename: row.sourceFilename,
+      sourceUri: row.sourceUri,
+      tagCount: row.tagCount,
+      tagLabels: splitTagLabels(row.tagLabels),
+    })) satisfies LibraryCaptureRecord[];
   }
 
   async listLibraryFeed(params: { limit?: number; smartView: LibrarySmartView; sort: LibrarySortOption }) {
@@ -320,6 +463,21 @@ export class CaptureRepository {
       note,
       noteNormalized,
       updatedAt,
+      captureId,
+    );
+  }
+
+  async touchLastViewed(captureId: string, viewedAt: number) {
+    await this.db.runAsync(
+      `
+        UPDATE captures
+        SET
+          last_viewed_at = ?,
+          updated_at = ?
+        WHERE id = ?
+      `,
+      viewedAt,
+      viewedAt,
       captureId,
     );
   }
