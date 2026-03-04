@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { parseLocalDateBoundaryMs } from '@/utils/dates';
+
 const dateStringSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 export const searchFiltersSchema = z.object({
@@ -91,8 +93,8 @@ export function resolveSearchTimestampRange(filters: SearchFilters): SearchTimes
   const normalized = normalizeSearchFilters(filters);
 
   return {
-    from: normalized.dateFrom ? parseDateBoundary(normalized.dateFrom, 'start') : null,
-    to: normalized.dateTo ? parseDateBoundary(normalized.dateTo, 'end') : null,
+    from: parseLocalDateBoundaryMs(normalized.dateFrom, 'start'),
+    to: parseLocalDateBoundaryMs(normalized.dateTo, 'end'),
   };
 }
 
@@ -104,10 +106,4 @@ function normalizeDateString(value: string | null | undefined) {
   }
 
   return trimmed;
-}
-
-function parseDateBoundary(value: string, boundary: 'start' | 'end') {
-  const timeSuffix = boundary === 'start' ? 'T00:00:00.000' : 'T23:59:59.999';
-  const parsed = new Date(`${value}${timeSuffix}`);
-  return Number.isFinite(parsed.getTime()) ? parsed.getTime() : null;
 }

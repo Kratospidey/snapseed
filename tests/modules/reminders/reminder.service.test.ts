@@ -167,4 +167,39 @@ describe('ReminderService', () => {
     );
     expect(finalUpsert.dueAt).toBeGreaterThan(now);
   });
+
+  it('serializes concurrent reconcile calls so pending reminders are processed once per cycle', async () => {
+    let resolvePending: (() => void) | undefined;
+    mockReminderRepository.listPending.mockImplementation(
+      () =>
+        new Promise<Array<ReturnType<typeof createReminderRecord>>>((resolve) => {
+          resolvePending = () => resolve([]);
+        }),
+    );
+
+    const service = new ReminderService({} as never);
+    const firstRun = service.reconcile(Date.now());
+    const secondRun = service.reconcile(Date.now() + 5_000);
+
+    resolvePending?.();
+    await Promise.all([firstRun, secondRun]);
+
+    expect(mockReminderRepository.listPending).toHaveBeenCalledTimes(1);
+  });
+
+  it('still clears reminder metadata when notification cancellation throws', async () => {
+    mockReminderRepository.getByCaptureId.mockResolvedValue(
+      createReminderRecord({
+        notificationId: 'notif-1',
+      }),
+    );
+    mockReminderScheduler.cancelNotification.mockRejectedValue(new Error('scheduler unavailable'));
+
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const service = new ReminderService({} as never);
+    await service.clearReminder('capture-1');
+    warnSpy.mockRestore();
+
+    expect(mockReminderRepository.deleteByCaptureId).toHaveBeenCalledWith('capture-1');
+  });
 });

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/primitives/AppText';
@@ -16,7 +17,7 @@ type ReminderRowProps = {
   rowActionScope: 'done' | 'pending';
 };
 
-export function ReminderRow({
+function ReminderRowComponent({
   item,
   onMarkDone,
   onOpenCapture,
@@ -116,11 +117,13 @@ function RowActionButton({
 }
 
 function formatDateTime(timestamp: number) {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(timestamp);
+  return REMINDER_DATE_TIME_FORMATTER.format(timestamp);
 }
+
+const REMINDER_DATE_TIME_FORMATTER = new Intl.DateTimeFormat(undefined, {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+});
 
 const styles = StyleSheet.create({
   actionButton: {
@@ -165,3 +168,4 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
 });
+export const ReminderRow = memo(ReminderRowComponent);

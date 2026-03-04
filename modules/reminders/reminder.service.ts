@@ -25,6 +25,7 @@ type UpsertReminderInput = z.infer<typeof upsertReminderInputSchema>;
 export class ReminderService {
   private readonly reminderRepository: ReminderRepository;
   private readonly reminderScheduler: ReminderScheduler;
+  private reconcileInFlight: Promise<void> | null = null;
 
   constructor(db: SQLiteDatabase) {
     this.reminderRepository = new ReminderRepository(db);
@@ -34,9 +35,7 @@ export class ReminderService {
   async clearReminder(captureId: string) {
     const existing = await this.reminderRepository.getByCaptureId(captureId);
 
-    if (existing?.notificationId) {
-      await this.reminderScheduler.cancelNotification(existing.notificationId);
-    }
+    await this.cancelNotificationSafely(existing?.notificationId);
 
     await this.reminderRepository.deleteByCaptureId(captureId);
   }
@@ -58,9 +57,7 @@ export class ReminderService {
 
     const now = Date.now();
 
-    if (existing.notificationId) {
-      await this.reminderScheduler.cancelNotification(existing.notificationId);
-    }
+    await this.cancelNotificationSafely(existing.notificationId);
 
     await this.reminderRepository.upsert({
       ...existing,
@@ -77,18 +74,16 @@ export class ReminderService {
   }
 
   async reconcile(now = Date.now()) {
-    const pending = await this.reminderRepository.listPending();
-
-    for (const reminder of pending) {
-      if (reminder.dueAt < now && shouldAutoSnooze(reminder)) {
-        await this.autoSnoozeReminder(reminder, now);
-        continue;
-      }
-
-      if (!reminder.notificationId && reminder.dueAt > now) {
-        await this.scheduleAndPersist(reminder, now);
-      }
+    if (this.reconcileInFlight) {
+      await this.reconcileInFlight;
+      return;
     }
+
+    this.reconcileInFlight = this.reconcilePendingReminders(now).finally(() => {
+      this.reconcileInFlight = null;
+    });
+
+    await this.reconcileInFlight;
   }
 
   async rescheduleReminder(input: UpsertReminderInput) {
@@ -142,9 +137,7 @@ export class ReminderService {
     const now = Date.now();
     const existing = await this.reminderRepository.getByCaptureId(parsed.captureId);
 
-    if (existing?.notificationId) {
-      await this.reminderScheduler.cancelNotification(existing.notificationId);
-    }
+    await this.cancelNotificationSafely(existing?.notificationId);
 
     const pendingReminder = createPendingReminderRecord({
       captureId: parsed.captureId,
@@ -165,9 +158,7 @@ export class ReminderService {
     const nextDueAt = computeNextAutoSnoozeDueAt(reminder, now);
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || reminder.timezone || 'UTC';
 
-    if (reminder.notificationId) {
-      await this.reminderScheduler.cancelNotification(reminder.notificationId);
-    }
+    await this.cancelNotificationSafely(reminder.notificationId);
 
     const nextRecord: ReminderRecord = {
       ...reminder,
@@ -209,6 +200,35 @@ export class ReminderService {
     });
 
     return schedulingResult;
+  }
+
+  private async reconcilePendingReminders(now: number) {
+    const pending = await this.reminderRepository.listPending();
+
+    for (const reminder of pending) {
+      if (reminder.dueAt < now && shouldAutoSnooze(reminder)) {
+        await this.autoSnoozeReminder(reminder, now);
+        continue;
+      }
+
+      if (!reminder.notificationId && reminder.dueAt > now) {
+        await this.scheduleAndPersist(reminder, now);
+      }
+    }
+  }
+
+  private async cancelNotificationSafely(notificationId: string | null | undefined) {
+    if (!notificationId) {
+      return;
+    }
+
+    try {
+      await this.reminderScheduler.cancelNotification(notificationId);
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('[reminders] failed to cancel notification', error);
+      }
+    }
   }
 }
 

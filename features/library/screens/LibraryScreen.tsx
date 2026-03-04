@@ -1,4 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
+import { useCallback } from 'react';
 import { FlatList, Pressable, RefreshControl, SafeAreaView, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/primitives/AppText';
@@ -42,6 +43,18 @@ export function LibraryScreen() {
   });
 
   const items = data?.feed ?? [];
+  const renderGridItem = useCallback(
+    ({ item }: { item: LibraryFeedItem }) => (
+      <View style={styles.gridItem}>
+        <LibraryGridCard item={item} onPressCapture={openCapture} />
+      </View>
+    ),
+    [openCapture],
+  );
+  const renderListItem = useCallback(
+    ({ item }: { item: LibraryFeedItem }) => <LibraryListRow item={item} onPressCapture={openCapture} />,
+    [openCapture],
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -104,15 +117,7 @@ export function LibraryScreen() {
           refreshControl={
             <RefreshControl refreshing={isRefreshing} tintColor={colors.accent} onRefresh={refresh} />
           }
-          renderItem={({ item }) =>
-            viewMode === 'grid' ? (
-              <View style={styles.gridItem}>
-                <LibraryGridCard item={item} onPress={() => openCapture(item.id)} />
-              </View>
-            ) : (
-              <LibraryListRow item={item} onPress={() => openCapture(item.id)} />
-            )
-          }
+          renderItem={viewMode === 'grid' ? renderGridItem : renderListItem}
           showsVerticalScrollIndicator={false}
         />
       )}

@@ -49,6 +49,16 @@ export function TagCapturesScreen() {
     setCaptures(nextCaptures);
     setIsLoading(false);
   }, [captureService, tagId, tagService]);
+  const openCaptureDetail = useCallback(
+    (captureId: string) => {
+      router.push(routes.captureDetail(captureId));
+    },
+    [router],
+  );
+  const renderCaptureItem = useCallback(
+    ({ item }: { item: LibraryFeedItem }) => <LibraryListRow item={item} onPressCapture={openCaptureDetail} />,
+    [openCaptureDetail],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -99,9 +109,7 @@ export function TagCapturesScreen() {
             </View>
           </View>
         }
-        renderItem={({ item }) => (
-          <LibraryListRow item={item} onPress={() => router.push(routes.captureDetail(item.id))} />
-        )}
+        renderItem={renderCaptureItem}
         showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>

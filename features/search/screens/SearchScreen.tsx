@@ -1,7 +1,9 @@
+import { useCallback } from 'react';
 import { FlatList, SafeAreaView, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/primitives/AppText';
 import { LibraryListRow } from '@/features/library/components/LibraryListRow';
+import type { LibraryCaptureRecord } from '@/modules/captures/capture.types';
 import { colors, spacing } from '@/theme';
 
 import { RecentSearchList } from '../components/RecentSearchList';
@@ -29,6 +31,10 @@ export function SearchScreen() {
     setQueryText,
     toggleFilter,
   } = useSearchScreen();
+  const renderResultItem = useCallback(
+    ({ item }: { item: LibraryCaptureRecord }) => <LibraryListRow item={item} onPressCapture={openCapture} />,
+    [openCapture],
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -100,7 +106,7 @@ export function SearchScreen() {
         contentContainerStyle={styles.content}
         data={results}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <LibraryListRow item={item} onPress={() => openCapture(item.id)} />}
+        renderItem={renderResultItem}
         showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>

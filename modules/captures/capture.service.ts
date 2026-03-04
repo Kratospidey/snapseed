@@ -106,6 +106,7 @@ export class CaptureService {
   }
 
   async deleteCaptureMetadata(captureId: string) {
+    await this.reminderService.clearReminder(captureId);
     await this.captureRepository.deleteById(captureId);
     await this.searchService.reindexCapture(captureId);
   }

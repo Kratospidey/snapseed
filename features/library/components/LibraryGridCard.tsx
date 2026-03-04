@@ -1,3 +1,4 @@
+import { memo, useCallback } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/primitives/AppText';
@@ -10,12 +11,26 @@ import { TagPill } from './TagPill';
 
 type LibraryGridCardProps = {
   item: LibraryFeedItem;
-  onPress: () => void;
+  onPress?: () => void;
+  onPressCapture?: (captureId: string) => void;
 };
 
-export function LibraryGridCard({ item, onPress }: LibraryGridCardProps) {
+export const LibraryGridCard = memo(function LibraryGridCard({
+  item,
+  onPress,
+  onPressCapture,
+}: LibraryGridCardProps) {
+  const handlePress = useCallback(() => {
+    if (onPressCapture) {
+      onPressCapture(item.id);
+      return;
+    }
+
+    onPress?.();
+  }, [item.id, onPress, onPressCapture]);
+
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={styles.card}>
+    <Pressable accessibilityRole="button" onPress={handlePress} style={styles.card}>
       <View style={styles.thumbnailWrap}>
         <CapturePreviewImage
           isMissing={item.isMissing === 1}
@@ -44,7 +59,7 @@ export function LibraryGridCard({ item, onPress }: LibraryGridCardProps) {
       </View>
     </Pressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   badgeOverlay: {

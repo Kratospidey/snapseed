@@ -1,3 +1,4 @@
+import { memo, useCallback } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/primitives/AppText';
@@ -10,12 +11,30 @@ import { TagPill } from './TagPill';
 
 type LibraryListRowProps = {
   item: LibraryFeedItem;
-  onPress: () => void;
+  onPress?: () => void;
+  onPressCapture?: (captureId: string) => void;
 };
 
-export function LibraryListRow({ item, onPress }: LibraryListRowProps) {
+const IMPORTED_DATE_FORMATTER = new Intl.DateTimeFormat(undefined, {
+  dateStyle: 'medium',
+});
+
+export const LibraryListRow = memo(function LibraryListRow({
+  item,
+  onPress,
+  onPressCapture,
+}: LibraryListRowProps) {
+  const handlePress = useCallback(() => {
+    if (onPressCapture) {
+      onPressCapture(item.id);
+      return;
+    }
+
+    onPress?.();
+  }, [item.id, onPress, onPressCapture]);
+
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={styles.row}>
+    <Pressable accessibilityRole="button" onPress={handlePress} style={styles.row}>
       <View style={styles.thumbnailWrap}>
         <CapturePreviewImage
           isMissing={item.isMissing === 1}
@@ -50,18 +69,12 @@ export function LibraryListRow({ item, onPress }: LibraryListRowProps) {
         ) : null}
 
         <AppText color={colors.textMuted} variant="caption">
-          Imported {formatDate(item.importedAt)}
+          Imported {IMPORTED_DATE_FORMATTER.format(item.importedAt)}
         </AppText>
       </View>
     </Pressable>
   );
-}
-
-function formatDate(timestamp: number) {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-  }).format(timestamp);
-}
+});
 
 const styles = StyleSheet.create({
   badgesRow: {

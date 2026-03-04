@@ -2,6 +2,7 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { RECENT_SEARCH_LIMIT } from '@/constants/limits';
 import type { SearchFilters } from '@/modules/search/search.types';
+import { parseLocalDateBoundaryMs } from '@/utils/dates';
 
 type RecentSearchRecord = {
   filterSnapshot: string | null;
@@ -158,13 +159,21 @@ function buildSearchFilterClause(filters: SearchFilters) {
   }
 
   if (filters.dateFrom) {
-    clauses.push('COALESCE(c.captured_at, c.imported_at) >= ?');
-    params.push(new Date(`${filters.dateFrom}T00:00:00.000`).getTime());
+    const dateFrom = parseLocalDateBoundaryMs(filters.dateFrom, 'start');
+
+    if (dateFrom !== null) {
+      clauses.push('COALESCE(c.captured_at, c.imported_at) >= ?');
+      params.push(dateFrom);
+    }
   }
 
   if (filters.dateTo) {
-    clauses.push('COALESCE(c.captured_at, c.imported_at) <= ?');
-    params.push(new Date(`${filters.dateTo}T23:59:59.999`).getTime());
+    const dateTo = parseLocalDateBoundaryMs(filters.dateTo, 'end');
+
+    if (dateTo !== null) {
+      clauses.push('COALESCE(c.captured_at, c.imported_at) <= ?');
+      params.push(dateTo);
+    }
   }
 
   return {

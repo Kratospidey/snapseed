@@ -1,6 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { initialMigration } from './migrations/0001_initial';
+import { hardeningIndexesMigration } from './migrations/0002_hardening_indexes';
 
 type Migration = {
   name: string;
@@ -8,7 +9,7 @@ type Migration = {
   version: number;
 };
 
-const MIGRATIONS: Migration[] = [initialMigration];
+const MIGRATIONS: Migration[] = [initialMigration, hardeningIndexesMigration];
 
 export async function runMigrationsAsync(db: SQLiteDatabase) {
   const currentVersion =
@@ -27,4 +28,3 @@ export async function runMigrationsAsync(db: SQLiteDatabase) {
     `);
   }
 }
-
