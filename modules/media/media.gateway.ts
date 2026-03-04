@@ -1,3 +1,4 @@
+import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
 
 import { getSourceScheme } from '@/utils/strings';
@@ -28,6 +29,57 @@ export class MediaGateway {
 
   async requestPermission() {
     return MediaLibrary.requestPermissionsAsync(false, ['photo']);
+  }
+
+  async verifySourceAvailability(input: {
+    mediaAssetId: string | null;
+    sourceScheme: 'content' | 'file' | 'ph' | 'unknown';
+    sourceUri: string;
+  }) {
+    if (input.mediaAssetId) {
+      try {
+        const info = await MediaLibrary.getAssetInfoAsync(input.mediaAssetId, {
+          shouldDownloadFromNetwork: false,
+        });
+
+        if (normalizePreviewUri(info.localUri ?? info.uri)) {
+          return true;
+        }
+      } catch {
+        // Keep checking source URI fallbacks below.
+      }
+    }
+
+    const normalizedUri = normalizePreviewUri(input.sourceUri);
+
+    if (!normalizedUri) {
+      return false;
+    }
+
+    const scheme = input.sourceScheme === 'unknown' ? getSourceScheme(normalizedUri) : input.sourceScheme;
+
+    if (scheme === 'file') {
+      try {
+        const fileInfo = await FileSystem.getInfoAsync(normalizedUri);
+        return Boolean(fileInfo.exists);
+      } catch {
+        return false;
+      }
+    }
+
+    if (scheme === 'content') {
+      return true;
+    }
+
+    if (scheme === 'ph') {
+      return Boolean(input.mediaAssetId);
+    }
+
+    if (normalizedUri.startsWith('http://') || normalizedUri.startsWith('https://') || normalizedUri.startsWith('data:')) {
+      return true;
+    }
+
+    return false;
   }
 
   async loadPhotoAssetsPage(params: { after?: string | null; first?: number } = {}): Promise<MediaPickerPage> {

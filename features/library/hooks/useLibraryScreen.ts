@@ -12,6 +12,7 @@ import {
 } from '@/modules/captures/capture.types';
 import { SettingsService } from '@/modules/settings/settings.service';
 import { TagService } from '@/modules/tags/tag.service';
+import { GraveyardService } from '@/modules/graveyard/graveyard.service';
 import type { LibraryViewMode } from '@/types/domain';
 
 import type { LibraryScreenData } from '../types';
@@ -27,6 +28,7 @@ export function useLibraryScreen({ smartViewParam }: UseLibraryScreenParams) {
   const router = useRouter();
   const db = useSQLiteContext();
   const captureService = useMemo(() => new CaptureService(db), [db]);
+  const graveyardService = useMemo(() => new GraveyardService(db), [db]);
   const settingsService = useMemo(() => new SettingsService(db), [db]);
   const tagService = useMemo(() => new TagService(db), [db]);
   const parsedSmartView = librarySmartViewSchema.safeParse(smartViewParam);
@@ -38,7 +40,7 @@ export function useLibraryScreen({ smartViewParam }: UseLibraryScreenParams) {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    void settingsService.getLibraryLastViewMode().then((nextMode) => {
+    void settingsService.getLibraryInitialViewMode().then((nextMode) => {
       setViewMode(nextMode);
     });
   }, [settingsService]);
@@ -63,6 +65,11 @@ export function useLibraryScreen({ smartViewParam }: UseLibraryScreenParams) {
     async (refreshing: boolean) => {
       if (refreshing) {
         setIsRefreshing(true);
+        try {
+          await graveyardService.runIntegrityScan({ limit: 60 });
+        } catch {
+          // Continue loading feed even if background integrity check fails.
+        }
       } else {
         setIsLoading(true);
       }
@@ -95,7 +102,7 @@ export function useLibraryScreen({ smartViewParam }: UseLibraryScreenParams) {
       setIsLoading(false);
       setIsRefreshing(false);
     },
-    [captureService, smartView, sort, tagService, viewMode],
+    [captureService, graveyardService, smartView, sort, tagService, viewMode],
   );
 
   useFocusEffect(

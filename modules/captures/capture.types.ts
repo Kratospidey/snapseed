@@ -116,3 +116,11 @@ export type LibraryCaptureRecord = {
   tagCount: number;
   tagLabels: string[];
 };
+
+export type CaptureSourceReference = {
+  id: string;
+  isMissing: boolean;
+  mediaAssetId: string | null;
+  sourceScheme: z.infer<typeof captureSourceSchemeSchema>;
+  sourceUri: string;
+};

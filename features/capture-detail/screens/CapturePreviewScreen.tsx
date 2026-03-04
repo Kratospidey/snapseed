@@ -6,6 +6,7 @@ import { Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-nat
 
 import { AppText } from '@/components/primitives/AppText';
 import { CaptureService } from '@/modules/captures/capture.service';
+import { GraveyardService } from '@/modules/graveyard/graveyard.service';
 import { colors, spacing } from '@/theme';
 
 import { CapturePreviewImage } from '../../library/components/CapturePreviewImage';
@@ -15,6 +16,7 @@ export function CapturePreviewScreen() {
   const router = useRouter();
   const db = useSQLiteContext();
   const captureService = useMemo(() => new CaptureService(db), [db]);
+  const graveyardService = useMemo(() => new GraveyardService(db), [db]);
   const [capture, setCapture] = useState<Awaited<ReturnType<CaptureService['getCaptureDetail']>> | null>(null);
 
   useEffect(() => {
@@ -29,7 +31,19 @@ export function CapturePreviewScreen() {
         return;
       }
 
-      const nextCapture = await captureService.getCaptureDetail(captureId);
+      let nextCapture = await captureService.getCaptureDetail(captureId);
+
+      if (nextCapture && !nextCapture.isMissing) {
+        try {
+          const verifyResult = await graveyardService.verifyCaptureById(nextCapture.id);
+
+          if (verifyResult === 'missing') {
+            nextCapture = await captureService.getCaptureDetail(captureId);
+          }
+        } catch {
+          // Preview still renders from known metadata if verification fails.
+        }
+      }
 
       if (isMounted) {
         setCapture(nextCapture);
@@ -41,7 +55,7 @@ export function CapturePreviewScreen() {
     return () => {
       isMounted = false;
     };
-  }, [captureId, captureService]);
+  }, [captureId, captureService, graveyardService]);
 
   return (
     <SafeAreaView style={styles.safeArea}>

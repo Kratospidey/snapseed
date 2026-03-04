@@ -23,6 +23,12 @@ export function RootLayoutShell() {
         <Stack.Screen name="tags/[tagId]" options={{ headerShown: false }} />
         <Stack.Screen name="modals/import/picker" options={{ headerShown: false, presentation: 'modal' }} />
         <Stack.Screen name="modals/import/review" options={{ headerShown: false, presentation: 'modal' }} />
+        <Stack.Screen name="modals/relink" options={{ headerShown: false, presentation: 'modal' }} />
+        <Stack.Screen name="settings/notifications" options={{ headerShown: false }} />
+        <Stack.Screen name="settings/storage" options={{ headerShown: false }} />
+        <Stack.Screen name="settings/backup" options={{ headerShown: false }} />
+        <Stack.Screen name="settings/about" options={{ headerShown: false }} />
+        <Stack.Screen name="settings/onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
     </>

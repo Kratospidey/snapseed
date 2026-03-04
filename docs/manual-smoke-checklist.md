@@ -65,6 +65,23 @@
 - Delete a tag.
 - Open related Captures from a tag row.
 
+## Graveyard
+
+- Break one Capture source reference in a safe dev path and trigger a refresh or diagnostics scan.
+- Confirm the Capture enters the Graveyard smart view.
+- Open the graveyard Capture detail and confirm relink action is visible.
+- Relink to a new media item and confirm the Capture leaves Graveyard.
+- Permanently delete metadata from graveyard context and confirm it disappears from Library and Search.
+
+## Settings and backup
+
+- Open Settings and confirm grouped entries render.
+- Change default Library view mode and confirm it persists.
+- Open Storage diagnostics and run missing-original check.
+- Confirm diagnostics show Capture count, Graveyard count, reminder count, DB size estimate, and last scan/export timestamps.
+- Open Backup and export metadata backup.
+- Confirm messaging states metadata-first backup and no screenshot asset restore.
+
 ## Notes for failures
 
 - If `Open original` fails, record:

@@ -7,6 +7,7 @@ import type {
   ImportDuplicateCandidateRecord,
   CaptureSearchProjection,
   CaptureInsertRecord,
+  CaptureSourceReference,
   LibraryCaptureRecord,
   LibrarySortOption,
   LibrarySmartView,
@@ -355,12 +356,101 @@ export class CaptureRepository {
     );
   }
 
+  async clearMissing(captureId: string, updatedAt: number) {
+    await this.db.runAsync(
+      `
+        UPDATE captures
+        SET
+          is_missing = 0,
+          missing_detected_at = NULL,
+          updated_at = ?
+        WHERE id = ?
+      `,
+      updatedAt,
+      captureId,
+    );
+  }
+
+  async getSourceReferenceById(captureId: string) {
+    const row = await this.db.getFirstAsync<{
+      id: string;
+      isMissing: 0 | 1;
+      mediaAssetId: string | null;
+      sourceScheme: CaptureSourceReference['sourceScheme'];
+      sourceUri: string;
+    }>(
+      `
+        SELECT
+          id,
+          is_missing AS isMissing,
+          media_asset_id AS mediaAssetId,
+          source_scheme AS sourceScheme,
+          source_uri AS sourceUri
+        FROM captures
+        WHERE id = ?
+          AND deleted_at IS NULL
+      `,
+      captureId,
+    );
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      id: row.id,
+      isMissing: row.isMissing === 1,
+      mediaAssetId: row.mediaAssetId,
+      sourceScheme: row.sourceScheme,
+      sourceUri: row.sourceUri,
+    } satisfies CaptureSourceReference;
+  }
+
+  async listIntegrityScanCandidates(limit: number) {
+    const rows = await this.db.getAllAsync<{
+      id: string;
+      isMissing: 0 | 1;
+      mediaAssetId: string | null;
+      sourceScheme: CaptureSourceReference['sourceScheme'];
+      sourceUri: string;
+    }>(
+      `
+        SELECT
+          id,
+          is_missing AS isMissing,
+          media_asset_id AS mediaAssetId,
+          source_scheme AS sourceScheme,
+          source_uri AS sourceUri
+        FROM captures
+        WHERE deleted_at IS NULL
+        ORDER BY is_missing DESC, imported_at DESC, id DESC
+        LIMIT ?
+      `,
+      limit,
+    );
+
+    return rows.map(
+      (row) =>
+        ({
+          id: row.id,
+          isMissing: row.isMissing === 1,
+          mediaAssetId: row.mediaAssetId,
+          sourceScheme: row.sourceScheme,
+          sourceUri: row.sourceUri,
+        }) satisfies CaptureSourceReference,
+    );
+  }
+
   async relinkSource(params: {
     captureId: string;
+    fileSize: number | null;
+    height: number | null;
     mediaAssetId: string | null;
-    sourceScheme: string;
+    sourceFilename: string | null;
+    sourceScheme: CaptureSourceReference['sourceScheme'];
     sourceUri: string;
     updatedAt: number;
+    width: number | null;
   }) {
     await this.db.runAsync(
       `
@@ -369,6 +459,10 @@ export class CaptureRepository {
           media_asset_id = ?,
           source_uri = ?,
           source_scheme = ?,
+          source_filename = ?,
+          file_size = ?,
+          width = ?,
+          height = ?,
           is_missing = 0,
           missing_detected_at = NULL,
           updated_at = ?
@@ -377,6 +471,10 @@ export class CaptureRepository {
       params.mediaAssetId,
       params.sourceUri,
       params.sourceScheme,
+      params.sourceFilename,
+      params.fileSize,
+      params.width,
+      params.height,
       params.updatedAt,
       params.captureId,
     );

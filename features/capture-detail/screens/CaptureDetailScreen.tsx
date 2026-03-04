@@ -19,6 +19,7 @@ import { AppText } from '@/components/primitives/AppText';
 import { CAPTURE_NOTE_MAX_LENGTH } from '@/constants/limits';
 import { routes } from '@/constants/routes';
 import { CaptureService } from '@/modules/captures/capture.service';
+import { GraveyardService } from '@/modules/graveyard/graveyard.service';
 import { colors, spacing, typography } from '@/theme';
 
 import {
@@ -37,6 +38,7 @@ export function CaptureDetailScreen() {
   const db = useSQLiteContext();
   const viewport = useWindowDimensions();
   const captureService = useMemo(() => new CaptureService(db), [db]);
+  const graveyardService = useMemo(() => new GraveyardService(db), [db]);
   const [capture, setCapture] = useState<Awaited<ReturnType<CaptureService['getCaptureDetail']>> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -68,11 +70,24 @@ export function CaptureDetailScreen() {
       setIsLoading(true);
     }
 
-    const nextCapture = await captureService.getCaptureDetail(captureId);
+    let nextCapture = await captureService.getCaptureDetail(captureId);
+
+    if (nextCapture && !nextCapture.isMissing) {
+      try {
+        const verifyResult = await graveyardService.verifyCaptureById(nextCapture.id);
+
+        if (verifyResult === 'missing') {
+          nextCapture = await captureService.getCaptureDetail(captureId);
+        }
+      } catch {
+        // Keep detail rendering even if missing-source verification cannot run.
+      }
+    }
+
     setCapture(nextCapture);
     syncDrafts(nextCapture);
     setIsLoading(false);
-  }, [captureId, captureService, syncDrafts]);
+  }, [captureId, captureService, graveyardService, syncDrafts]);
 
   useEffect(() => {
     void loadCapture({ showLoadingState: true });
@@ -141,9 +156,17 @@ export function CaptureDetailScreen() {
     try {
       await Linking.openURL(decision.sourceUri);
     } catch {
+      try {
+        if (capture.id) {
+          await graveyardService.verifyCaptureById(capture.id);
+          await loadCapture();
+        }
+      } catch {
+        // Keep the user-visible failure handling below.
+      }
       Alert.alert('Unable to open original', 'The device could not open this source reference.');
     }
-  }, [capture]);
+  }, [capture, graveyardService, loadCapture]);
 
   const handleSaveNote = useCallback(async () => {
     if (!capture) {
@@ -365,6 +388,23 @@ export function CaptureDetailScreen() {
               {capture.reminderDueAt ? <MetaBadge label="Reminder" tone="accent" /> : null}
             </View>
 
+            {capture.isMissing ? (
+              <View style={styles.graveyardBanner}>
+                <AppText variant="action">Original file unavailable</AppText>
+                <AppText color={colors.textMuted}>
+                  This Capture is in Graveyard state. Relink a new original to restore previews and open-original behavior.
+                </AppText>
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={pendingAction !== null}
+                  onPress={() => router.push(routes.relinkCapture(capture.id))}
+                  style={styles.secondaryButton}
+                >
+                  <AppText variant="action">Relink original</AppText>
+                </Pressable>
+              </View>
+            ) : null}
+
             <View style={styles.quickActionsRow}>
               <QuickActionButton
                 disabled={capture.isMissing}
@@ -567,7 +607,11 @@ export function CaptureDetailScreen() {
                   style={styles.dangerButton}
                 >
                   <AppText color={colors.surface} variant="action">
-                    {pendingAction === 'delete' ? 'Deleting...' : 'Delete Capture'}
+                    {pendingAction === 'delete'
+                      ? 'Deleting...'
+                      : capture.isMissing
+                        ? 'Delete metadata permanently'
+                        : 'Delete Capture'}
                   </AppText>
                 </Pressable>
               </View>
@@ -722,6 +766,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: spacing.sm,
+  },
+  graveyardBanner: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: 20,
+    borderWidth: 1,
+    gap: spacing.sm,
+    padding: spacing.md,
   },
   iconButton: {
     alignItems: 'center',
