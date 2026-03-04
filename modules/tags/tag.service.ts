@@ -19,6 +19,10 @@ export class TagService {
     await this.tagRepository.deleteTag(tagId);
   }
 
+  async getUsageSummary(limit: number = 5) {
+    return this.tagRepository.getUsageSummary(limit);
+  }
+
   async renameOrMergeTag(tagId: string, nextLabel: string) {
     const normalizedLabel = normalizeTagLabel(nextLabel);
     const existing = await this.tagRepository.findByCanonicalLabel(normalizedLabel);
@@ -61,4 +65,3 @@ export class TagService {
     return tagIds;
   }
 }
-

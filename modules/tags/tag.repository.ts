@@ -73,6 +73,49 @@ export class TagRepository {
     `);
   }
 
+  async getUsageSummary(limit: number) {
+    const [topTags, usedTagCountRow] = await Promise.all([
+      this.db.getAllAsync<
+        TagRecord & {
+          captureCount: number;
+        }
+      >(
+        `
+          SELECT
+            t.id,
+            t.label,
+            t.canonical_label AS canonicalLabel,
+            t.created_at AS createdAt,
+            t.updated_at AS updatedAt,
+            t.last_used_at AS lastUsedAt,
+            COUNT(ct.capture_id) AS captureCount
+          FROM tags t
+          INNER JOIN capture_tags ct ON ct.tag_id = t.id
+          GROUP BY t.id
+          ORDER BY captureCount DESC, t.label ASC
+          LIMIT ?
+        `,
+        limit,
+      ),
+      this.db.getFirstAsync<{ usedTagCount: number }>(
+        `
+          SELECT COUNT(*) AS usedTagCount
+          FROM tags t
+          WHERE EXISTS (
+            SELECT 1
+            FROM capture_tags ct
+            WHERE ct.tag_id = t.id
+          )
+        `,
+      ),
+    ]);
+
+    return {
+      topTags,
+      usedTagCount: usedTagCountRow?.usedTagCount ?? 0,
+    };
+  }
+
   async mergeTags(sourceTagId: string, targetTagId: string, mergedAt: number) {
     await this.db.withTransactionAsync(async () => {
       await this.db.runAsync(
@@ -149,4 +192,3 @@ export class TagRepository {
     );
   }
 }
-

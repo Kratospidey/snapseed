@@ -24,9 +24,15 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="capture/[captureId]" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="capture/[captureId]/preview"
+          options={{ headerShown: false, presentation: 'fullScreenModal' }}
+        />
+        <Stack.Screen name="modals/import/picker" options={{ headerShown: false, presentation: 'modal' }} />
+        <Stack.Screen name="modals/import/review" options={{ headerShown: false, presentation: 'modal' }} />
         <Stack.Screen name="+not-found" />
       </Stack>
     </SQLiteProvider>
   );
 }
-

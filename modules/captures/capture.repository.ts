@@ -1,6 +1,25 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-import type { CaptureSearchProjection, CaptureInsertRecord } from './capture.types';
+import type {
+  CaptureDetailRecord,
+  CaptureSearchProjection,
+  CaptureInsertRecord,
+  LibraryCaptureRecord,
+  LibrarySortOption,
+  LibrarySmartView,
+} from './capture.types';
+
+const TAG_SEPARATOR = '\u001f';
+
+const LIBRARY_SORT_SQL: Record<LibrarySortOption, string> = {
+  captured_asc: 'COALESCE(c.captured_at, c.imported_at) ASC, c.imported_at ASC, c.id ASC',
+  captured_desc: 'COALESCE(c.captured_at, c.imported_at) DESC, c.imported_at DESC, c.id DESC',
+  imported_asc: 'c.imported_at ASC, c.id ASC',
+  imported_desc: 'c.imported_at DESC, c.id DESC',
+  last_viewed_desc: 'COALESCE(c.last_viewed_at, 0) DESC, c.imported_at DESC, c.id DESC',
+  reminder_due_asc:
+    "CASE WHEN r.status = 'pending' THEN 0 ELSE 1 END ASC, COALESCE(r.due_at, c.imported_at) ASC, c.imported_at DESC, c.id DESC",
+};
 
 export class CaptureRepository {
   constructor(private readonly db: SQLiteDatabase) {}
@@ -67,6 +86,135 @@ export class CaptureRepository {
       totalCount: row?.totalCount ?? 0,
       unsortedCount: row?.unsortedCount ?? 0,
     };
+  }
+
+  async getDetailById(captureId: string) {
+    const row = await this.db.getFirstAsync<{
+      capturedAt: number | null;
+      duplicateGroupHint: string | null;
+      id: string;
+      importedAt: number;
+      isMissing: number;
+      note: string | null;
+      reminderDueAt: number | null;
+      sourceFilename: string | null;
+      sourceUri: string;
+      tagLabels: string | null;
+    }>(
+      `
+        SELECT
+          c.id,
+          c.source_uri AS sourceUri,
+          c.source_filename AS sourceFilename,
+          c.imported_at AS importedAt,
+          c.captured_at AS capturedAt,
+          c.note,
+          c.is_missing AS isMissing,
+          c.duplicate_group_hint AS duplicateGroupHint,
+          r.due_at AS reminderDueAt,
+          (
+            SELECT GROUP_CONCAT(label, '${TAG_SEPARATOR}')
+            FROM (
+              SELECT t.label AS label
+              FROM capture_tags ct
+              INNER JOIN tags t ON t.id = ct.tag_id
+              WHERE ct.capture_id = c.id
+              ORDER BY t.last_used_at DESC, t.label ASC
+            )
+          ) AS tagLabels
+        FROM captures c
+        LEFT JOIN reminders r ON r.capture_id = c.id
+        WHERE c.id = ?
+          AND c.deleted_at IS NULL
+      `,
+      captureId,
+    );
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      capturedAt: row.capturedAt,
+      duplicateGroupHint: row.duplicateGroupHint,
+      id: row.id,
+      importedAt: row.importedAt,
+      isMissing: row.isMissing === 1,
+      note: row.note,
+      reminderDueAt: row.reminderDueAt,
+      sourceFilename: row.sourceFilename,
+      sourceUri: row.sourceUri,
+      tags: splitTagLabels(row.tagLabels),
+    } satisfies CaptureDetailRecord;
+  }
+
+  async listLibraryFeed(params: { limit?: number; smartView: LibrarySmartView; sort: LibrarySortOption }) {
+    const limit = params.limit ?? 120;
+    const whereClause = this.buildLibraryWhereClause(params.smartView);
+    const orderByClause = LIBRARY_SORT_SQL[params.sort];
+    const rows = await this.db.getAllAsync<{
+      capturedAt: number | null;
+      duplicateGroupHint: string | null;
+      id: string;
+      importedAt: number;
+      isMissing: 0 | 1;
+      note: string | null;
+      reminderDueAt: number | null;
+      sourceFilename: string | null;
+      sourceUri: string;
+      tagCount: number;
+      tagLabels: string | null;
+    }>(
+      `
+        SELECT
+          c.id,
+          c.source_uri AS sourceUri,
+          c.source_filename AS sourceFilename,
+          c.imported_at AS importedAt,
+          c.captured_at AS capturedAt,
+          c.note,
+          c.is_missing AS isMissing,
+          c.duplicate_group_hint AS duplicateGroupHint,
+          r.due_at AS reminderDueAt,
+          (
+            SELECT COUNT(*)
+            FROM capture_tags ct_count
+            WHERE ct_count.capture_id = c.id
+          ) AS tagCount,
+          (
+            SELECT GROUP_CONCAT(label, '${TAG_SEPARATOR}')
+            FROM (
+              SELECT t.label AS label
+              FROM capture_tags ct
+              INNER JOIN tags t ON t.id = ct.tag_id
+              WHERE ct.capture_id = c.id
+              ORDER BY t.last_used_at DESC, t.label ASC
+              LIMIT 2
+            )
+          ) AS tagLabels
+        FROM captures c
+        LEFT JOIN reminders r ON r.capture_id = c.id
+        WHERE c.deleted_at IS NULL
+          AND ${whereClause}
+        ORDER BY ${orderByClause}
+        LIMIT ?
+      `,
+      limit,
+    );
+
+    return rows.map((row) => ({
+      capturedAt: row.capturedAt,
+      duplicateGroupHint: row.duplicateGroupHint,
+      id: row.id,
+      importedAt: row.importedAt,
+      isMissing: row.isMissing,
+      note: row.note,
+      reminderDueAt: row.reminderDueAt,
+      sourceFilename: row.sourceFilename,
+      sourceUri: row.sourceUri,
+      tagCount: row.tagCount,
+      tagLabels: splitTagLabels(row.tagLabels),
+    })) satisfies LibraryCaptureRecord[];
   }
 
   async insertMany(records: CaptureInsertRecord[]) {
@@ -175,5 +323,34 @@ export class CaptureRepository {
       captureId,
     );
   }
+
+  private buildLibraryWhereClause(smartView: LibrarySmartView) {
+    switch (smartView) {
+      case 'graveyard':
+        return 'c.is_missing = 1';
+      case 'recent':
+        return '1 = 1';
+      case 'reminders':
+        return "r.status = 'pending'";
+      case 'unsorted':
+        return `
+          c.note IS NULL
+          AND NOT EXISTS (
+            SELECT 1
+            FROM capture_tags ct_unsorted
+            WHERE ct_unsorted.capture_id = c.id
+          )
+        `;
+      default:
+        return '1 = 1';
+    }
+  }
 }
 
+function splitTagLabels(value: string | null) {
+  if (!value) {
+    return [];
+  }
+
+  return value.split(TAG_SEPARATOR).filter(Boolean);
+}

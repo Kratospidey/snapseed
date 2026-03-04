@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { CAPTURE_NOTE_MAX_LENGTH } from '@/constants/limits';
+import type { DatabaseBoolean } from '@/types/db';
 
 export const captureSourceSchemeSchema = z.enum(['content', 'file', 'ph', 'unknown']);
 
@@ -54,3 +55,42 @@ export type CaptureSearchProjection = {
   tagText: string;
 };
 
+export const librarySmartViewSchema = z.enum(['graveyard', 'recent', 'reminders', 'unsorted']);
+export const librarySortOptionSchema = z.enum([
+  'captured_asc',
+  'captured_desc',
+  'imported_asc',
+  'imported_desc',
+  'last_viewed_desc',
+  'reminder_due_asc',
+]);
+
+export type LibrarySmartView = z.infer<typeof librarySmartViewSchema>;
+export type LibrarySortOption = z.infer<typeof librarySortOptionSchema>;
+
+export type CaptureDetailRecord = {
+  capturedAt: number | null;
+  duplicateGroupHint: string | null;
+  id: string;
+  importedAt: number;
+  isMissing: boolean;
+  note: string | null;
+  reminderDueAt: number | null;
+  sourceFilename: string | null;
+  sourceUri: string;
+  tags: string[];
+};
+
+export type LibraryCaptureRecord = {
+  capturedAt: number | null;
+  duplicateGroupHint: string | null;
+  id: string;
+  importedAt: number;
+  isMissing: DatabaseBoolean;
+  note: string | null;
+  reminderDueAt: number | null;
+  sourceFilename: string | null;
+  sourceUri: string;
+  tagCount: number;
+  tagLabels: string[];
+};

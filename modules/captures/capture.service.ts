@@ -7,7 +7,15 @@ import { ReminderService } from '../reminders/reminder.service';
 import { SearchService } from '../search/search.service';
 import { TagService } from '../tags/tag.service';
 import { CaptureRepository } from './capture.repository';
-import { createCaptureInputSchema, type CreateCaptureInput, type CaptureInsertRecord } from './capture.types';
+import {
+  createCaptureInputSchema,
+  librarySortOptionSchema,
+  librarySmartViewSchema,
+  type CreateCaptureInput,
+  type CaptureInsertRecord,
+  type LibrarySortOption,
+  type LibrarySmartView,
+} from './capture.types';
 
 export class CaptureService {
   private readonly captureRepository: CaptureRepository;
@@ -73,6 +81,22 @@ export class CaptureService {
     return records.map((record) => record.id);
   }
 
+  async getCaptureDetail(captureId: string) {
+    return this.captureRepository.getDetailById(captureId);
+  }
+
+  async getLibraryFeed(input: { limit?: number; smartView: LibrarySmartView; sort: LibrarySortOption }) {
+    return this.captureRepository.listLibraryFeed({
+      limit: input.limit,
+      smartView: librarySmartViewSchema.parse(input.smartView),
+      sort: librarySortOptionSchema.parse(input.sort),
+    });
+  }
+
+  async getSmartCounts() {
+    return this.captureRepository.getSmartCounts();
+  }
+
   async updateNote(captureId: string, note: string | null) {
     const normalizedNote = normalizeNote(note);
 
@@ -80,4 +104,3 @@ export class CaptureService {
     await this.searchService.reindexCapture(captureId);
   }
 }
-

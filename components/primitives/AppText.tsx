@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from 'react';
-import type { StyleProp, TextStyle } from 'react-native';
+import type { StyleProp, TextProps, TextStyle } from 'react-native';
 import { StyleSheet, Text } from 'react-native';
 
 import { colors, typography } from '@/theme';
@@ -8,6 +8,7 @@ type AppTextVariant = 'body' | 'caption' | 'action' | 'eyebrow' | 'title' | 'dis
 
 type AppTextProps = PropsWithChildren<{
   color?: string;
+  numberOfLines?: TextProps['numberOfLines'];
   style?: StyleProp<TextStyle>;
   variant?: AppTextVariant;
 }>;
@@ -40,7 +41,10 @@ const variantStyles = StyleSheet.create({
   },
 });
 
-export function AppText({ children, color, style, variant = 'body' }: AppTextProps) {
-  return <Text style={[variantStyles[variant], color ? { color } : undefined, style]}>{children}</Text>;
+export function AppText({ children, color, numberOfLines, style, variant = 'body' }: AppTextProps) {
+  return (
+    <Text numberOfLines={numberOfLines} style={[variantStyles[variant], color ? { color } : undefined, style]}>
+      {children}
+    </Text>
+  );
 }
-
