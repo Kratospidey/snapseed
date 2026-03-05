@@ -1,44 +1,52 @@
-import { render } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 
 import { TabsLayoutShell } from '@/components/navigation/TabsLayoutShell';
+import { routes } from '@/constants/routes';
 
 const mockPush = jest.fn();
-const mockTabsProps: Array<{ initialRouteName?: string; screenOptions?: unknown }> = [];
-const mockScreenNames: string[] = [];
+const mockNativeTabsProps: Array<{ blurEffect?: string; children?: React.ReactNode }> = [];
+const mockTriggerNames: string[] = [];
 
 jest.mock('expo-router', () => {
+  return {
+    useRouter: () => ({ push: mockPush }),
+  };
+});
+
+jest.mock('expo-router/unstable-native-tabs', () => {
   const React = require('react');
   const { View } = require('react-native');
 
-  const Tabs = ({ children, ...props }: { children: React.ReactNode; initialRouteName?: string }) => {
-    mockTabsProps.push(props);
-    return React.createElement(View, { testID: 'tabs' }, children);
+  const NativeTabs = ({ children, ...props }: { children: React.ReactNode }) => {
+    mockNativeTabsProps.push(props);
+    return React.createElement(View, { testID: 'native-tabs' }, children);
   };
 
-  Tabs.Screen = ({ name }: { name: string }) => {
-    mockScreenNames.push(name);
+  NativeTabs.Trigger = ({ name }: { name: string }) => {
+    mockTriggerNames.push(name);
     return null;
   };
 
   return {
-    Tabs,
-    useRouter: () => ({ push: mockPush }),
+    Icon: () => null,
+    Label: () => null,
+    NativeTabs,
+    VectorIcon: () => null,
   };
 });
 
 describe('TabsLayoutShell', () => {
   beforeEach(() => {
     mockPush.mockReset();
-    mockTabsProps.length = 0;
-    mockScreenNames.length = 0;
+    mockNativeTabsProps.length = 0;
+    mockTriggerNames.length = 0;
   });
 
-  it('registers the nested tab index routes Expo Router resolves under the tabs group', () => {
+  it('registers native tab triggers for all tab routes', () => {
     render(<TabsLayoutShell />);
 
-    expect(mockTabsProps.at(0)?.initialRouteName).toBe('library/index');
-    expect(mockScreenNames).toEqual([
+    expect(mockTriggerNames).toEqual([
       'library/index',
       'search/index',
       'reminders/index',
@@ -47,15 +55,16 @@ describe('TabsLayoutShell', () => {
     ]);
   });
 
-  it('provides a custom glass tab-bar background renderer', () => {
+  it('configures native tabs with a glass-capable iOS blur effect', () => {
     render(<TabsLayoutShell />);
 
-    const screenOptions = mockTabsProps.at(0)?.screenOptions;
-    expect(typeof screenOptions).toBe('function');
+    expect(mockNativeTabsProps.at(0)?.blurEffect).toBeDefined();
+  });
 
-    const resolvedOptions = (screenOptions as (args: { route: { name: string } }) => { tabBarBackground?: unknown })({
-      route: { name: 'library/index' },
-    });
-    expect(typeof resolvedOptions.tabBarBackground).toBe('function');
+  it('keeps Add Capture FAB wired to import picker route', () => {
+    render(<TabsLayoutShell />);
+
+    fireEvent.press(screen.getByText('Add Capture'));
+    expect(mockPush).toHaveBeenCalledWith(routes.importPicker);
   });
 });

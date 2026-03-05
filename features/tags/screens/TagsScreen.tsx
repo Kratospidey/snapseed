@@ -155,7 +155,7 @@ export function TagsScreen() {
             </View>
 
             <GlassSurface style={styles.createCard} useBlur={false}>
-              <View style={styles.inputWrap}>
+              <View style={styles.inputWrap} testID="create-tag-input-wrap">
                 <AppText variant="eyebrow">Create tag</AppText>
                 <AppInput
                   autoCapitalize="none"
@@ -167,13 +167,15 @@ export function TagsScreen() {
                 />
               </View>
 
-              <AppButton
-                disabled={!createLabel.trim() || pendingAction === 'create'}
-                onPress={() => void handleCreate()}
-                style={styles.createActionButton}
-              >
-                Add tag
-              </AppButton>
+              <View style={styles.createActions} testID="create-tag-actions-wrap">
+                <AppButton
+                  disabled={!createLabel.trim() || pendingAction === 'create'}
+                  onPress={() => void handleCreate()}
+                  style={styles.createActionButton}
+                >
+                  Add tag
+                </AppButton>
+              </View>
             </GlassSurface>
           </View>
         }
@@ -282,6 +284,9 @@ const styles = StyleSheet.create({
   createActionButton: {
     alignSelf: 'flex-start',
     minWidth: 136,
+  },
+  createActions: {
+    marginTop: spacing.sm,
   },
   editorBlock: {
     gap: spacing.sm,

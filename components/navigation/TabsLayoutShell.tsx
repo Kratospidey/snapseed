@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { BlurView } from 'expo-blur';
-import { Tabs, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
+import { Icon, Label, NativeTabs, VectorIcon } from 'expo-router/unstable-native-tabs';
 import { Animated, Platform, StyleSheet, View } from 'react-native';
 import { useEffect, useRef } from 'react';
 
@@ -16,8 +16,6 @@ const TAB_ICON_BY_ROUTE = {
   'settings/index': 'settings-outline',
   'tags/index': 'pricetags-outline',
 } as const;
-
-type TabRouteName = keyof typeof TAB_ICON_BY_ROUTE;
 
 export function TabsLayoutShell() {
   const router = useRouter();
@@ -45,33 +43,46 @@ export function TabsLayoutShell() {
 
   return (
     <View style={styles.shell}>
-      <Tabs
-        initialRouteName="library/index"
-        screenOptions={({ route }) => ({
-          headerShown: false,
-          tabBarActiveTintColor: colors.accent,
-          tabBarBackground: () => <TabBarGlassBackground />,
-          tabBarInactiveTintColor: colors.textMuted,
-          tabBarLabelStyle: {
+      <NativeTabs
+        backgroundColor="rgba(255, 255, 255, 0.8)"
+        blurEffect={Platform.OS === 'ios' ? 'systemUltraThinMaterialLight' : undefined}
+        disableTransparentOnScrollEdge
+        iconColor={{ default: colors.textMuted, selected: colors.accent }}
+        labelStyle={{
+          default: {
+            color: colors.textMuted,
             fontSize: typography.caption.fontSize,
             fontWeight: '600',
           },
-          tabBarStyle: styles.tabBar,
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons
-              color={color}
-              name={TAB_ICON_BY_ROUTE[(route.name as TabRouteName) ?? 'library/index'] ?? 'grid-outline'}
-              size={size}
-            />
-          ),
-        })}
+          selected: {
+            color: colors.accent,
+            fontSize: typography.caption.fontSize,
+            fontWeight: '700',
+          },
+        }}
+        shadowColor="rgba(12, 20, 16, 0.08)"
       >
-        <Tabs.Screen name="library/index" options={{ title: 'Library' }} />
-        <Tabs.Screen name="search/index" options={{ title: 'Search' }} />
-        <Tabs.Screen name="reminders/index" options={{ title: 'Reminders' }} />
-        <Tabs.Screen name="tags/index" options={{ title: 'Tags' }} />
-        <Tabs.Screen name="settings/index" options={{ title: 'Settings' }} />
-      </Tabs>
+        <NativeTabs.Trigger name="library/index">
+          <Label>Library</Label>
+          <Icon src={<VectorIcon family={Ionicons} name={TAB_ICON_BY_ROUTE['library/index']} />} />
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger name="search/index">
+          <Label>Search</Label>
+          <Icon src={<VectorIcon family={Ionicons} name={TAB_ICON_BY_ROUTE['search/index']} />} />
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger name="reminders/index">
+          <Label>Reminders</Label>
+          <Icon src={<VectorIcon family={Ionicons} name={TAB_ICON_BY_ROUTE['reminders/index']} />} />
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger name="tags/index">
+          <Label>Tags</Label>
+          <Icon src={<VectorIcon family={Ionicons} name={TAB_ICON_BY_ROUTE['tags/index']} />} />
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger name="settings/index">
+          <Label>Settings</Label>
+          <Icon src={<VectorIcon family={Ionicons} name={TAB_ICON_BY_ROUTE['settings/index']} />} />
+        </NativeTabs.Trigger>
+      </NativeTabs>
 
       <Animated.View style={[styles.fabWrap, { transform: [{ translateY: fabFloat }] }]}>
         <TactilePressable
@@ -86,22 +97,6 @@ export function TabsLayoutShell() {
           </AppText>
         </TactilePressable>
       </Animated.View>
-    </View>
-  );
-}
-
-function TabBarGlassBackground() {
-  const shouldUseBlur = Platform.OS === 'ios';
-
-  return (
-    <View pointerEvents="none" style={styles.tabBarBackground}>
-      {shouldUseBlur ? (
-        <BlurView intensity={26} style={StyleSheet.absoluteFill} tint="light" />
-      ) : (
-        <View pointerEvents="none" style={styles.tabBarFallbackBase} />
-      )}
-      <View pointerEvents="none" style={styles.tabBarOverlayTint} />
-      <View pointerEvents="none" style={styles.tabBarTopEdge} />
     </View>
   );
 }
@@ -130,40 +125,5 @@ const styles = StyleSheet.create({
   shell: {
     backgroundColor: colors.background,
     flex: 1,
-  },
-  tabBar: {
-    backgroundColor: 'transparent',
-    borderTopLeftRadius: radii.xl,
-    borderTopRightRadius: radii.xl,
-    borderTopWidth: 0,
-    elevation: 10,
-    height: 72,
-    overflow: 'hidden',
-    paddingBottom: spacing.sm,
-    paddingTop: spacing.xs,
-    shadowColor: colors.shadow,
-    shadowOffset: { height: -4, width: 0 },
-    shadowOpacity: 0.12,
-    shadowRadius: 14,
-  },
-  tabBarBackground: {
-    backgroundColor: colors.surfaceGlass,
-    ...StyleSheet.absoluteFillObject,
-  },
-  tabBarFallbackBase: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.82)',
-  },
-  tabBarOverlayTint: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(241, 247, 243, 0.32)',
-  },
-  tabBarTopEdge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.72)',
-    height: 1,
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 0,
   },
 });
