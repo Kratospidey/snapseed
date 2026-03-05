@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
-import { FlatList, SafeAreaView, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/primitives/AppText';
 import { GlassSurface } from '@/components/primitives/GlassSurface';
@@ -38,7 +39,7 @@ export function SearchScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
       <FlatList
         ListEmptyComponent={
           isIdle ? (

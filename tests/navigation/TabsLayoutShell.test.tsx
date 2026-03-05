@@ -5,7 +5,12 @@ import { TabsLayoutShell } from '@/components/navigation/TabsLayoutShell';
 import { routes } from '@/constants/routes';
 
 const mockPush = jest.fn();
-const mockNativeTabsProps: Array<{ blurEffect?: string; children?: React.ReactNode }> = [];
+const mockNativeTabsProps: Array<{
+  backgroundColor?: string;
+  blurEffect?: string;
+  children?: React.ReactNode;
+  disableTransparentOnScrollEdge?: boolean;
+}> = [];
 const mockTriggerNames: string[] = [];
 
 jest.mock('expo-router', () => {
@@ -59,6 +64,13 @@ describe('TabsLayoutShell', () => {
     render(<TabsLayoutShell />);
 
     expect(mockNativeTabsProps.at(0)?.blurEffect).toBeDefined();
+  });
+
+  it('keeps the native tab bar background transparent on iOS and allows scroll-edge transparency', () => {
+    render(<TabsLayoutShell />);
+
+    expect(mockNativeTabsProps.at(0)?.backgroundColor).toBe('transparent');
+    expect(mockNativeTabsProps.at(0)?.disableTransparentOnScrollEdge).not.toBe(true);
   });
 
   it('keeps Add Capture FAB wired to import picker route', () => {

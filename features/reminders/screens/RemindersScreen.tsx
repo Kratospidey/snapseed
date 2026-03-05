@@ -1,4 +1,5 @@
-import { Alert, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 
 import { DateTimeFieldPicker } from '@/components/reminders/DateTimeFieldPicker';
@@ -76,7 +77,7 @@ export function RemindersScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.headerCopy}>
           <AppText variant="eyebrow">SnapBrain</AppText>

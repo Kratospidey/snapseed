@@ -44,9 +44,8 @@ export function TabsLayoutShell() {
   return (
     <View style={styles.shell}>
       <NativeTabs
-        backgroundColor="rgba(255, 255, 255, 0.8)"
+        backgroundColor={Platform.OS === 'ios' ? 'transparent' : colors.background}
         blurEffect={Platform.OS === 'ios' ? 'systemUltraThinMaterialLight' : undefined}
-        disableTransparentOnScrollEdge
         iconColor={{ default: colors.textMuted, selected: colors.accent }}
         labelStyle={{
           default: {
@@ -123,7 +122,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   shell: {
-    backgroundColor: colors.background,
+    backgroundColor: 'transparent',
     flex: 1,
   },
 });

@@ -5,11 +5,11 @@ import {
   LayoutAnimation,
   Platform,
   RefreshControl,
-  SafeAreaView,
   StyleSheet,
   UIManager,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/primitives/AppButton';
 import { AppText } from '@/components/primitives/AppText';
@@ -83,7 +83,7 @@ export function LibraryScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
       {isLoading && !data ? (
         <View style={styles.loadingState}>
           <AppText variant="eyebrow">Library</AppText>
