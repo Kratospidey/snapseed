@@ -10,17 +10,21 @@ import {
   ScrollView,
   StyleSheet,
   View,
-  TextInput,
 } from 'react-native';
 
 import { DateTimeFieldPicker } from '@/components/reminders/DateTimeFieldPicker';
+import { AppButton } from '@/components/primitives/AppButton';
+import { AppChip } from '@/components/primitives/AppChip';
+import { AppIconButton } from '@/components/primitives/AppIconButton';
+import { AppInput } from '@/components/primitives/AppInput';
 import { AppText } from '@/components/primitives/AppText';
+import { GlassSurface } from '@/components/primitives/GlassSurface';
 import { routes } from '@/constants/routes';
 import { ImportAssetPreview } from '@/features/import/components/ImportAssetPreview';
 import { useImportDraftStore } from '@/features/import/importDraft.store';
 import { ImportService } from '@/modules/import/import.service';
 import type { ImportDraftAsset } from '@/modules/import/import.types';
-import { colors, spacing } from '@/theme';
+import { colors, radii, shadows, spacing } from '@/theme';
 
 export function ImportReviewScreen() {
   const router = useRouter();
@@ -165,16 +169,16 @@ export function ImportReviewScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.headerRow}>
-          <Pressable accessibilityRole="button" hitSlop={8} onPress={() => router.back()} style={styles.iconButton}>
+          <AppIconButton onPress={() => router.back()}>
             <Ionicons color={colors.text} name="arrow-back" size={22} />
-          </Pressable>
+          </AppIconButton>
           <View style={styles.headerCopy}>
             <AppText variant="eyebrow">Add Capture</AppText>
             <AppText variant="title">Review</AppText>
           </View>
         </View>
 
-        <View style={styles.summaryCard}>
+        <GlassSurface style={styles.summaryCard} useBlur={false}>
           <View style={styles.summaryHeader}>
             <View style={styles.summaryCopy}>
               <AppText variant="title">{reviewAssets.length} ready to import</AppText>
@@ -186,7 +190,7 @@ export function ImportReviewScreen() {
             {duplicateStatus === 'loading' ? <ActivityIndicator color={colors.accent} /> : null}
           </View>
           {duplicateAssetCount > 0 ? (
-            <View style={styles.warningCard}>
+            <GlassSurface style={styles.warningCard} useBlur={false} variant="inset">
               <AppText variant="action">
                 {duplicateAssetCount} selected item{duplicateAssetCount === 1 ? '' : 's'} may already exist in
                 the Library
@@ -195,14 +199,14 @@ export function ImportReviewScreen() {
                 Duplicate detection is warning-only. Keep everything or remove individual items from
                 this batch.
               </AppText>
-            </View>
+            </GlassSurface>
           ) : null}
-        </View>
+        </GlassSurface>
 
         {reviewAssets.length > 0 ? (
           <View style={styles.assetList}>
             {reviewAssets.map((asset) => (
-              <View key={asset.assetId} style={styles.assetCard}>
+              <GlassSurface key={asset.assetId} style={styles.assetCard} useBlur={false}>
                 <ImportAssetPreview
                   accessibilityLabel={`Preview ${asset.filename ?? 'selected image'}`}
                   containerStyle={styles.assetPreview}
@@ -260,43 +264,42 @@ export function ImportReviewScreen() {
                     </AppText>
                   )}
                 </View>
-              </View>
+              </GlassSurface>
             ))}
           </View>
         ) : null}
 
         {saveMessage ? (
-          <View style={styles.messageBanner}>
+          <GlassSurface style={styles.messageBanner} useBlur={false}>
             <AppText color={colors.text} variant="caption">
               {saveMessage}
             </AppText>
-          </View>
+          </GlassSurface>
         ) : null}
 
         {saveError ? (
-          <View style={styles.errorBanner}>
+          <GlassSurface style={styles.errorBanner} useBlur={false}>
             <AppText color={colors.danger} variant="caption">
               {saveError}
             </AppText>
-          </View>
+          </GlassSurface>
         ) : null}
 
-        <View style={styles.panel}>
+        <GlassSurface style={styles.panel} useBlur={false}>
           <AppText variant="eyebrow">Shared tags</AppText>
-          <TextInput
+          <AppInput
             autoCapitalize="none"
             onChangeText={setSharedTagsInput}
             placeholder="study, receipts, shopping"
-            placeholderTextColor={colors.textMuted}
             style={styles.input}
             value={sharedTagsInput}
           />
           <AppText color={colors.textMuted} variant="caption">
             Tags are normalized to lowercase canonical form. Emoji tags are supported.
           </AppText>
-        </View>
+        </GlassSurface>
 
-        <View style={styles.panel}>
+        <GlassSurface style={styles.panel} useBlur={false}>
           <View style={styles.panelHeader}>
             <View style={styles.panelHeaderCopy}>
               <AppText variant="eyebrow">Reminder to all</AppText>
@@ -304,15 +307,12 @@ export function ImportReviewScreen() {
                 Optional. One date-and-time reminder can be applied to every selected Capture.
               </AppText>
             </View>
-            <Pressable
-              accessibilityRole="button"
+            <AppChip
+              label={sharedReminder ? 'Clear' : 'Add reminder'}
               onPress={() =>
                 setSharedReminder(sharedReminder ? null : { localDate: '', localTime: '' })
               }
-              style={styles.secondaryButton}
-            >
-              <AppText variant="caption">{sharedReminder ? 'Clear' : 'Add reminder'}</AppText>
-            </Pressable>
+            />
           </View>
 
           {sharedReminder ? (
@@ -355,29 +355,26 @@ export function ImportReviewScreen() {
               Batch notes are intentionally not applied by default in MVP.
             </AppText>
           )}
-        </View>
+        </GlassSurface>
 
         {reviewAssets.length === 0 ? (
-          <View style={styles.panel}>
+          <GlassSurface style={styles.panel} useBlur={false}>
             <AppText variant="title">No media selected</AppText>
             <AppText color={colors.textMuted}>
               Go back to the picker to choose screenshots before saving.
             </AppText>
-          </View>
+          </GlassSurface>
         ) : null}
 
-        <Pressable
-          accessibilityRole="button"
+        <AppButton
           disabled={reviewAssets.length === 0 || isSaving}
           onPress={() => void handleSave()}
           style={[styles.primaryButton, reviewAssets.length === 0 || isSaving ? styles.primaryButtonDisabled : null]}
         >
-          <AppText style={styles.primaryButtonLabel} variant="action">
-            {isSaving
-              ? 'Saving...'
-              : `Import ${reviewAssets.length} Capture${reviewAssets.length === 1 ? '' : 's'}`}
-          </AppText>
-        </Pressable>
+          {isSaving
+            ? 'Saving...'
+            : `Import ${reviewAssets.length} Capture${reviewAssets.length === 1 ? '' : 's'}`}
+        </AppButton>
       </ScrollView>
 
       <Modal
@@ -446,11 +443,8 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   assetCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 22,
-    borderWidth: 1,
     overflow: 'hidden',
+    ...shadows.sm,
   },
   assetCopy: {
     flex: 1,
@@ -480,15 +474,11 @@ const styles = StyleSheet.create({
   },
   duplicateRow: {
     backgroundColor: colors.accentSoft,
-    borderRadius: 16,
+    borderRadius: radii.md,
     gap: 2,
     padding: spacing.sm,
   },
   errorBanner: {
-    backgroundColor: colors.surface,
-    borderColor: colors.danger,
-    borderRadius: 18,
-    borderWidth: 1,
     padding: spacing.md,
   },
   headerCopy: {
@@ -499,38 +489,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
   },
-  iconButton: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 999,
-    borderWidth: 1,
-    height: 42,
-    justifyContent: 'center',
-    width: 42,
-  },
   input: {
-    backgroundColor: colors.background,
-    borderColor: colors.border,
-    borderRadius: 16,
-    borderWidth: 1,
-    color: colors.text,
     minHeight: 52,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
   },
   messageBanner: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 18,
-    borderWidth: 1,
     padding: spacing.md,
   },
   panel: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 24,
-    borderWidth: 1,
     gap: spacing.sm,
     padding: spacing.lg,
   },
@@ -579,23 +544,15 @@ const styles = StyleSheet.create({
   },
   previewModalImage: {
     aspectRatio: 0.72,
-    borderRadius: 28,
+    borderRadius: radii.xl,
     minHeight: 520,
     width: '100%',
   },
-  primaryButton: {
-    alignItems: 'center',
-    backgroundColor: colors.accent,
-    borderRadius: 999,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
+  primaryButton: {},
   primaryButtonDisabled: {
     opacity: 0.45,
   },
-  primaryButtonLabel: {
-    color: colors.surface,
-  },
+  primaryButtonLabel: {},
   reminderInput: {
     flex: 1,
   },
@@ -607,8 +564,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   removeButton: {
-    backgroundColor: colors.background,
-    borderColor: colors.border,
+    backgroundColor: colors.surfaceRaised,
+    borderColor: colors.borderSoft,
     borderRadius: 999,
     borderWidth: 1,
     paddingHorizontal: spacing.md,
@@ -618,14 +575,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     flex: 1,
   },
-  secondaryButton: {
-    backgroundColor: colors.background,
-    borderColor: colors.border,
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-  },
+  secondaryButton: {},
   summaryCard: {
     gap: spacing.sm,
   },
@@ -640,10 +590,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   warningCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.accent,
-    borderRadius: 18,
-    borderWidth: 1,
     gap: spacing.xs,
     padding: spacing.md,
   },

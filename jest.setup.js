@@ -9,6 +9,14 @@ jest.mock('expo-image', () => {
     Image: ({ contentFit, ...props }) => React.createElement(Image, props),
   };
 });
+jest.mock('expo-blur', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+
+  return {
+    BlurView: ({ children, ...props }) => React.createElement(View, props, children),
+  };
+});
 jest.mock('@react-native-community/datetimepicker', () => {
   const React = require('react');
   const { View } = require('react-native');

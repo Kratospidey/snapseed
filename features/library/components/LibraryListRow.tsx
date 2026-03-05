@@ -1,9 +1,10 @@
 import { memo, useCallback } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/primitives/AppText';
+import { TactilePressable } from '@/components/primitives/TactilePressable';
 import type { LibraryFeedItem } from '@/features/library/types';
-import { colors, spacing } from '@/theme';
+import { colors, radii, shadows, spacing } from '@/theme';
 
 import { CapturePreviewImage } from './CapturePreviewImage';
 import { MetaBadge } from './MetaBadge';
@@ -34,7 +35,7 @@ export const LibraryListRow = memo(function LibraryListRow({
   }, [item.id, onPress, onPressCapture]);
 
   return (
-    <Pressable accessibilityRole="button" onPress={handlePress} style={styles.row}>
+    <TactilePressable accessibilityRole="button" intensity="soft" onPress={handlePress} style={styles.row}>
       <View style={styles.thumbnailWrap}>
         <CapturePreviewImage
           isMissing={item.isMissing === 1}
@@ -72,7 +73,7 @@ export const LibraryListRow = memo(function LibraryListRow({
           Imported {IMPORTED_DATE_FORMATTER.format(item.importedAt)}
         </AppText>
       </View>
-    </Pressable>
+    </TactilePressable>
   );
 });
 
@@ -90,13 +91,14 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   row: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 24,
+    backgroundColor: colors.surfaceGlass,
+    borderColor: colors.borderSoft,
+    borderRadius: radii.xl,
     borderWidth: 1,
     flexDirection: 'row',
     gap: spacing.md,
     padding: spacing.sm,
+    ...shadows.sm,
   },
   tagsRow: {
     flexDirection: 'row',
@@ -104,8 +106,8 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   thumbnailWrap: {
-    backgroundColor: colors.accentSoft,
-    borderRadius: 18,
+    backgroundColor: colors.surfaceInset,
+    borderRadius: radii.lg,
     height: 104,
     overflow: 'hidden',
     width: 92,

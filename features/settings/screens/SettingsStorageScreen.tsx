@@ -2,10 +2,13 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 
+import { AppButton } from '@/components/primitives/AppButton';
+import { AppIconButton } from '@/components/primitives/AppIconButton';
 import { AppText } from '@/components/primitives/AppText';
+import { GlassSurface } from '@/components/primitives/GlassSurface';
 import { DATABASE_NAME } from '@/constants/app';
 import { routes } from '@/constants/routes';
 import { CaptureService } from '@/modules/captures/capture.service';
@@ -88,16 +91,16 @@ export function SettingsStorageScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
-          <Pressable accessibilityRole="button" hitSlop={8} onPress={() => router.back()} style={styles.iconButton}>
+          <AppIconButton onPress={() => router.back()}>
             <Ionicons color={colors.text} name="arrow-back" size={22} />
-          </Pressable>
+          </AppIconButton>
           <View style={styles.headerCopy}>
             <AppText variant="eyebrow">Settings</AppText>
             <AppText variant="title">Storage diagnostics</AppText>
           </View>
         </View>
 
-        <View style={styles.card}>
+        <GlassSurface style={styles.card} useBlur={false}>
           <DiagnosticRow label="Captures" value={String(diagnostics.totalCount)} />
           <DiagnosticRow label="Graveyard" value={String(diagnostics.graveyardCount)} />
           <DiagnosticRow label="Pending reminders" value={String(diagnostics.reminderCount)} />
@@ -110,28 +113,26 @@ export function SettingsStorageScreen() {
             label="Last metadata export"
             value={diagnostics.lastExportAt ? formatTimestamp(diagnostics.lastExportAt) : 'Never'}
           />
-        </View>
+        </GlassSurface>
 
-        <Pressable accessibilityRole="button" onPress={() => void runGraveyardScan()} style={styles.primaryButton}>
-          <AppText color={colors.surface} variant="action">
-            {isScanning ? 'Running scan...' : 'Run missing-original check'}
-          </AppText>
-        </Pressable>
+        <AppButton onPress={() => void runGraveyardScan()} style={styles.primaryButton}>
+          {isScanning ? 'Running scan...' : 'Run missing-original check'}
+        </AppButton>
 
-        <Pressable
-          accessibilityRole="button"
+        <AppButton
           onPress={() => router.push(`${routes.library}?smartView=graveyard`)}
           style={styles.secondaryButton}
+          tone="secondary"
         >
-          <AppText variant="caption">Open Graveyard in Library</AppText>
-        </Pressable>
+          Open Graveyard in Library
+        </AppButton>
 
         {scanMessage ? (
-          <View style={styles.messageCard}>
+          <GlassSurface style={styles.messageCard} useBlur={false}>
             <AppText color={colors.textMuted} variant="caption">
               {scanMessage}
             </AppText>
-          </View>
+          </GlassSurface>
         ) : null}
       </ScrollView>
     </SafeAreaView>
@@ -185,10 +186,6 @@ function DiagnosticRow({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 20,
-    borderWidth: 1,
     gap: spacing.xs,
     padding: spacing.md,
   },
@@ -206,32 +203,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
   },
-  iconButton: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 999,
-    borderWidth: 1,
-    height: 42,
-    justifyContent: 'center',
-    width: 42,
-  },
   messageCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 14,
-    borderWidth: 1,
     padding: spacing.sm,
   },
-  primaryButton: {
-    alignItems: 'center',
-    backgroundColor: colors.accent,
-    borderRadius: 999,
-    justifyContent: 'center',
-    minHeight: 44,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
+  primaryButton: {},
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -241,13 +216,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   secondaryButton: {
-    alignItems: 'center',
-    borderColor: colors.border,
-    borderRadius: 999,
-    borderWidth: 1,
-    justifyContent: 'center',
     minHeight: 40,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
   },
 });

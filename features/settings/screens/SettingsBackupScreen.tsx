@@ -2,9 +2,12 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 
+import { AppButton } from '@/components/primitives/AppButton';
+import { AppIconButton } from '@/components/primitives/AppIconButton';
 import { AppText } from '@/components/primitives/AppText';
+import { GlassSurface } from '@/components/primitives/GlassSurface';
 import { BackupService } from '@/modules/backup/backup.service';
 import { SettingsService } from '@/modules/settings/settings.service';
 import { colors, spacing } from '@/theme';
@@ -47,16 +50,16 @@ export function SettingsBackupScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
-          <Pressable accessibilityRole="button" hitSlop={8} onPress={() => router.back()} style={styles.iconButton}>
+          <AppIconButton onPress={() => router.back()}>
             <Ionicons color={colors.text} name="arrow-back" size={22} />
-          </Pressable>
+          </AppIconButton>
           <View style={styles.headerCopy}>
             <AppText variant="eyebrow">Settings</AppText>
             <AppText variant="title">Backup export</AppText>
           </View>
         </View>
 
-        <View style={styles.card}>
+        <GlassSurface style={styles.card} useBlur={false}>
           <AppText variant="action">Metadata-first export</AppText>
           <AppText color={colors.textMuted}>
             SnapBrain exports SQLite metadata only. Original screenshot image files are not included and are not restored automatically.
@@ -64,20 +67,18 @@ export function SettingsBackupScreen() {
           <AppText color={colors.textMuted} variant="caption">
             Last export: {lastExportAt ? formatTimestamp(lastExportAt) : 'Never'}
           </AppText>
-        </View>
+        </GlassSurface>
 
-        <Pressable accessibilityRole="button" onPress={() => void handleExport()} style={styles.primaryButton}>
-          <AppText color={colors.surface} variant="action">
-            {isExporting ? 'Exporting...' : 'Export metadata backup'}
-          </AppText>
-        </Pressable>
+        <AppButton onPress={() => void handleExport()} style={styles.primaryButton}>
+          {isExporting ? 'Exporting...' : 'Export metadata backup'}
+        </AppButton>
 
         {message ? (
-          <View style={styles.messageCard}>
+          <GlassSurface style={styles.messageCard} useBlur={false}>
             <AppText color={colors.textMuted} variant="caption">
               {message}
             </AppText>
-          </View>
+          </GlassSurface>
         ) : null}
       </ScrollView>
     </SafeAreaView>
@@ -93,10 +94,6 @@ function formatTimestamp(value: number) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 20,
-    borderWidth: 1,
     gap: spacing.sm,
     padding: spacing.md,
   },
@@ -114,32 +111,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
   },
-  iconButton: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 999,
-    borderWidth: 1,
-    height: 42,
-    justifyContent: 'center',
-    width: 42,
-  },
   messageCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 14,
-    borderWidth: 1,
     padding: spacing.sm,
   },
-  primaryButton: {
-    alignItems: 'center',
-    backgroundColor: colors.accent,
-    borderRadius: 999,
-    justifyContent: 'center',
-    minHeight: 44,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
+  primaryButton: {},
   safeArea: {
     backgroundColor: colors.background,
     flex: 1,

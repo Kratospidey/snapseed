@@ -1,9 +1,9 @@
-import { ScrollView, Pressable, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 
-import { AppText } from '@/components/primitives/AppText';
+import { AppChip } from '@/components/primitives/AppChip';
 import type { LibrarySortDescriptor } from '@/features/library/types';
 import type { LibrarySortOption } from '@/modules/captures/capture.types';
-import { colors, spacing } from '@/theme';
+import { spacing } from '@/theme';
 
 type LibrarySortControlsProps = {
   onChange: (value: LibrarySortOption) => void;
@@ -18,20 +18,7 @@ export function LibrarySortControls({ onChange, options, selected }: LibrarySort
         const isSelected = option.value === selected;
 
         return (
-          <Pressable
-            accessibilityRole="button"
-            key={option.value}
-            onPress={() => onChange(option.value)}
-            style={[styles.chip, isSelected ? styles.chipSelected : undefined]}
-          >
-            <AppText
-              color={isSelected ? colors.surface : colors.textMuted}
-              style={styles.chipLabel}
-              variant="caption"
-            >
-              {option.label}
-            </AppText>
-          </Pressable>
+          <AppChip key={option.value} label={option.label} onPress={() => onChange(option.value)} selected={isSelected} />
         );
       })}
     </ScrollView>
@@ -39,21 +26,6 @@ export function LibrarySortControls({ onChange, options, selected }: LibrarySort
 }
 
 const styles = StyleSheet.create({
-  chip: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  chipLabel: {
-    fontWeight: '700',
-  },
-  chipSelected: {
-    backgroundColor: colors.text,
-    borderColor: colors.text,
-  },
   row: {
     gap: spacing.sm,
     paddingRight: spacing.lg,

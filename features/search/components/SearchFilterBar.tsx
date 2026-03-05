@@ -1,10 +1,13 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { DateTimeFieldPicker } from '@/components/reminders/DateTimeFieldPicker';
+import { AppButton } from '@/components/primitives/AppButton';
+import { AppChip } from '@/components/primitives/AppChip';
 import { AppText } from '@/components/primitives/AppText';
+import { GlassSurface } from '@/components/primitives/GlassSurface';
 import type { SearchFilters } from '@/modules/search/search.types';
-import { colors, spacing } from '@/theme';
+import { spacing } from '@/theme';
 
 type SearchFilterBarProps = {
   filters: SearchFilters;
@@ -37,7 +40,7 @@ export function SearchFilterBar({
       </View>
 
       {isDateRangeOpen ? (
-        <View style={styles.dateRangePanel}>
+        <GlassSurface style={styles.dateRangePanel} useBlur={false} variant="card">
           <View style={styles.dateRangeRow}>
             <View style={styles.dateField}>
               <DateTimeFieldPicker
@@ -61,45 +64,20 @@ export function SearchFilterBar({
             </View>
           </View>
 
-          <Pressable accessibilityRole="button" onPress={onClearDateRange} style={styles.clearButton}>
+          <AppButton onPress={onClearDateRange} style={styles.clearButton} tone="secondary">
             <AppText variant="caption">Clear range</AppText>
-          </Pressable>
-        </View>
+          </AppButton>
+        </GlassSurface>
       ) : null}
     </View>
   );
 }
 
 function FilterChip({ active, label, onPress }: { active: boolean; label: string; onPress: () => void }) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={[styles.chip, active ? styles.chipActive : null]}
-      testID={`search-filter-${label.toLowerCase().replace(/\s+/g, '-')}`}
-    >
-      <AppText color={active ? colors.surface : colors.text} variant="caption">
-        {label}
-      </AppText>
-    </Pressable>
-  );
+  return <AppChip label={label} onPress={onPress} selected={active} testID={`search-filter-${label.toLowerCase().replace(/\s+/g, '-')}`} />;
 }
 
 const styles = StyleSheet.create({
-  chip: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 999,
-    borderWidth: 1,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  chipActive: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
-  },
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -107,11 +85,6 @@ const styles = StyleSheet.create({
   },
   clearButton: {
     alignSelf: 'flex-start',
-    borderColor: colors.border,
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
   },
   container: {
     gap: spacing.sm,
@@ -120,10 +93,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dateRangePanel: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 20,
-    borderWidth: 1,
     gap: spacing.sm,
     padding: spacing.md,
   },

@@ -1,10 +1,12 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs, useRouter } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
+import { useEffect, useRef } from 'react';
 
 import { AppText } from '@/components/primitives/AppText';
+import { TactilePressable } from '@/components/primitives/TactilePressable';
 import { routes } from '@/constants/routes';
-import { colors, spacing, typography } from '@/theme';
+import { colors, motion, radii, shadows, spacing, typography } from '@/theme';
 
 const TAB_ICON_BY_ROUTE = {
   'library/index': 'grid-outline',
@@ -18,6 +20,27 @@ type TabRouteName = keyof typeof TAB_ICON_BY_ROUTE;
 
 export function TabsLayoutShell() {
   const router = useRouter();
+  const fabFloat = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(fabFloat, {
+          duration: motion.duration.slow,
+          toValue: -4,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fabFloat, {
+          duration: motion.duration.slow,
+          toValue: 0,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+
+    animation.start();
+    return () => animation.stop();
+  }, [fabFloat]);
 
   return (
     <View style={styles.shell}>
@@ -54,12 +77,19 @@ export function TabsLayoutShell() {
         <Tabs.Screen name="settings/index" options={{ title: 'Settings' }} />
       </Tabs>
 
-      <Pressable accessibilityRole="button" onPress={() => router.push(routes.importPicker)} style={styles.fab}>
-        <Ionicons color={colors.surface} name="add" size={24} />
-        <AppText color={colors.surface} style={styles.fabLabel} variant="caption">
-          Add Capture
-        </AppText>
-      </Pressable>
+      <Animated.View style={[styles.fabWrap, { transform: [{ translateY: fabFloat }] }]}>
+        <TactilePressable
+          accessibilityRole="button"
+          intensity="strong"
+          onPress={() => router.push(routes.importPicker)}
+          style={styles.fab}
+        >
+          <Ionicons color={colors.surface} name="add" size={24} />
+          <AppText color={colors.surface} style={styles.fabLabel} variant="caption">
+            Add Capture
+          </AppText>
+        </TactilePressable>
+      </Animated.View>
     </View>
   );
 }
@@ -68,13 +98,17 @@ const styles = StyleSheet.create({
   fab: {
     alignItems: 'center',
     backgroundColor: colors.accent,
-    borderRadius: 999,
-    bottom: 88,
-    elevation: 6,
+    borderColor: colors.accentStrong,
+    borderRadius: radii.pill,
+    borderWidth: 1,
     flexDirection: 'row',
     gap: spacing.xs,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+    ...shadows.floating,
+  },
+  fabWrap: {
+    bottom: 88,
     position: 'absolute',
     right: spacing.lg,
   },

@@ -1,9 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 
+import { AppIconButton } from '@/components/primitives/AppIconButton';
 import { AppText } from '@/components/primitives/AppText';
+import { GlassSurface } from '@/components/primitives/GlassSurface';
 import { colors, spacing } from '@/theme';
 
 export function SettingsAboutScreen() {
@@ -13,26 +15,26 @@ export function SettingsAboutScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
-          <Pressable accessibilityRole="button" hitSlop={8} onPress={() => router.back()} style={styles.iconButton}>
+          <AppIconButton onPress={() => router.back()}>
             <Ionicons color={colors.text} name="arrow-back" size={22} />
-          </Pressable>
+          </AppIconButton>
           <View style={styles.headerCopy}>
             <AppText variant="eyebrow">Settings</AppText>
             <AppText variant="title">About SnapBrain</AppText>
           </View>
         </View>
 
-        <View style={styles.card}>
+        <GlassSurface style={styles.card} useBlur={false}>
           <AppText variant="action">Version</AppText>
           <AppText color={colors.textMuted}>{Constants.expoConfig?.version ?? 'unknown'}</AppText>
-        </View>
+        </GlassSurface>
 
-        <View style={styles.card}>
+        <GlassSurface style={styles.card} useBlur={false}>
           <AppText variant="action">Model</AppText>
           <AppText color={colors.textMuted}>
             SnapBrain is an offline-first, metadata-first screenshot organizer. Captures keep references to originals and local metadata for fast retrieval.
           </AppText>
-        </View>
+        </GlassSurface>
       </ScrollView>
     </SafeAreaView>
   );
@@ -40,10 +42,6 @@ export function SettingsAboutScreen() {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 20,
-    borderWidth: 1,
     gap: spacing.xs,
     padding: spacing.md,
   },
@@ -60,16 +58,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: spacing.sm,
-  },
-  iconButton: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 999,
-    borderWidth: 1,
-    height: 42,
-    justifyContent: 'center',
-    width: 42,
   },
   safeArea: {
     backgroundColor: colors.background,

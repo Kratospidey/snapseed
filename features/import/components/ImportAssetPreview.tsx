@@ -129,12 +129,12 @@ export function ImportAssetPreview({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.accentSoft,
+    backgroundColor: colors.surfaceInset,
     overflow: 'hidden',
   },
   fallback: {
     alignItems: 'center',
-    backgroundColor: colors.accentSoft,
+    backgroundColor: colors.surfaceInset,
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: 12,

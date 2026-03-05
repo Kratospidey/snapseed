@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/primitives/AppText';
-import { colors, spacing } from '@/theme';
+import { colors, radii, spacing } from '@/theme';
 
 type MetaBadgeProps = {
   label: string;
@@ -12,17 +12,17 @@ const toneStyles = {
   accent: {
     backgroundColor: colors.accentSoft,
     borderColor: colors.accent,
-    color: colors.accent,
+    color: colors.accentStrong,
   },
   danger: {
-    backgroundColor: '#F7E0D8',
-    borderColor: '#A9471B',
-    color: '#8F3710',
+    backgroundColor: colors.dangerSoft,
+    borderColor: colors.danger,
+    color: colors.danger,
   },
   neutral: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    color: colors.textMuted,
+    backgroundColor: colors.surfaceRaised,
+    borderColor: colors.borderSoft,
+    color: colors.textSecondary,
   },
 } as const;
 
@@ -40,7 +40,7 @@ export function MetaBadge({ label, tone }: MetaBadgeProps) {
 
 const styles = StyleSheet.create({
   badge: {
-    borderRadius: 999,
+    borderRadius: radii.pill,
     borderWidth: 1,
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,

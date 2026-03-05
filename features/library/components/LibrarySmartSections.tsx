@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/primitives/AppText';
+import { AnimatedSectionCard } from '@/components/primitives/AnimatedSectionCard';
+import { GlassSurface } from '@/components/primitives/GlassSurface';
 import type { LibrarySmartView } from '@/modules/captures/capture.types';
-import { colors, spacing } from '@/theme';
+import { colors, radii, spacing } from '@/theme';
 
 import { TagPill } from './TagPill';
 
@@ -38,6 +40,7 @@ export function LibrarySmartSections({
     <ScrollView contentContainerStyle={styles.rail} horizontal showsHorizontalScrollIndicator={false}>
       <SmartCard
         count={totalCount}
+        delayMs={0}
         description="All Captures ordered by import time."
         isActive={selectedSmartView === 'recent'}
         label="Recently Added"
@@ -45,6 +48,7 @@ export function LibrarySmartSections({
       />
       <SmartCard
         count={unsortedCount}
+        delayMs={40}
         description="No tags and no note."
         isActive={selectedSmartView === 'unsorted'}
         label="Unsorted"
@@ -52,6 +56,7 @@ export function LibrarySmartSections({
       />
       <SmartCard
         count={activeTagCount}
+        delayMs={80}
         description="Top tag usage across the Library."
         isActive={false}
         label="Most Used Tags"
@@ -69,6 +74,7 @@ export function LibrarySmartSections({
       </SmartCard>
       <SmartCard
         count={reminderCount}
+        delayMs={120}
         description="Pending and upcoming reminders."
         isActive={selectedSmartView === 'reminders'}
         label="Reminder Pending"
@@ -76,6 +82,7 @@ export function LibrarySmartSections({
       />
       <SmartCard
         count={graveyardCount}
+        delayMs={160}
         description="Missing original files that can be relinked later."
         isActive={selectedSmartView === 'graveyard'}
         label="Graveyard"
@@ -89,6 +96,7 @@ export function LibrarySmartSections({
 type SmartCardProps = {
   children?: ReactNode;
   count: number;
+  delayMs?: number;
   description: string;
   isActive: boolean;
   label: string;
@@ -99,6 +107,7 @@ type SmartCardProps = {
 function SmartCard({
   children,
   count,
+  delayMs = 0,
   description,
   isActive,
   label,
@@ -106,46 +115,49 @@ function SmartCard({
   tone = 'default',
 }: SmartCardProps) {
   return (
-    <Pressable
+    <AnimatedSectionCard
       accessibilityRole="button"
+      delayMs={delayMs}
       onPress={onPress}
-      style={[
-        styles.card,
-        isActive ? styles.cardActive : undefined,
-        tone === 'danger' ? styles.cardDanger : undefined,
-      ]}
+      style={styles.cardPressable}
     >
-      <AppText variant="eyebrow">{label}</AppText>
-      <AppText style={styles.countText} variant="display">
-        {count}
-      </AppText>
-      <AppText color={colors.textMuted} variant="caption">
-        {description}
-      </AppText>
-      {children}
-    </Pressable>
+      <GlassSurface
+        style={[styles.card, isActive ? styles.cardActive : undefined, tone === 'danger' ? styles.cardDanger : undefined]}
+        useBlur={false}
+        variant="card"
+      >
+        <View style={styles.cardContent}>
+          <AppText variant="eyebrow">{label}</AppText>
+          <AppText style={styles.countText} variant="display">
+            {count}
+          </AppText>
+          <AppText color={colors.textMuted} variant="caption">
+            {description}
+          </AppText>
+          {children}
+        </View>
+      </GlassSurface>
+    </AnimatedSectionCard>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 26,
-    borderWidth: 1,
-    gap: spacing.sm,
     minHeight: 170,
-    padding: spacing.md,
     width: 220,
   },
   cardActive: {
     borderColor: colors.accent,
-    shadowColor: colors.accent,
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
   },
   cardDanger: {
-    backgroundColor: '#FFF3EE',
+    backgroundColor: '#FFF2F0',
+  },
+  cardContent: {
+    gap: spacing.sm,
+    padding: spacing.md,
+  },
+  cardPressable: {
+    borderRadius: radii.xl,
   },
   countText: {
     fontSize: 32,

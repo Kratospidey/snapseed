@@ -1,9 +1,10 @@
 import { memo, useCallback } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/primitives/AppText';
+import { TactilePressable } from '@/components/primitives/TactilePressable';
 import type { LibraryFeedItem } from '@/features/library/types';
-import { colors, spacing } from '@/theme';
+import { colors, radii, shadows, spacing } from '@/theme';
 
 import { CapturePreviewImage } from './CapturePreviewImage';
 import { MetaBadge } from './MetaBadge';
@@ -30,7 +31,9 @@ export const LibraryGridCard = memo(function LibraryGridCard({
   }, [item.id, onPress, onPressCapture]);
 
   return (
-    <Pressable accessibilityRole="button" onPress={handlePress} style={styles.card}>
+    <TactilePressable accessibilityRole="button" intensity="soft" onPress={handlePress} style={styles.card}>
+      <View pointerEvents="none" style={styles.cardTopHighlight} />
+      <View pointerEvents="none" style={styles.cardInsetBorder} />
       <View style={styles.thumbnailWrap}>
         <CapturePreviewImage
           isMissing={item.isMissing === 1}
@@ -57,7 +60,7 @@ export const LibraryGridCard = memo(function LibraryGridCard({
           </AppText>
         )}
       </View>
-    </Pressable>
+    </TactilePressable>
   );
 });
 
@@ -72,11 +75,29 @@ const styles = StyleSheet.create({
     top: spacing.sm,
   },
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceRaised,
     borderColor: colors.border,
-    borderRadius: 24,
+    borderRadius: radii.xl,
     borderWidth: 1,
     overflow: 'hidden',
+    ...shadows.md,
+  },
+  cardInsetBorder: {
+    ...StyleSheet.absoluteFillObject,
+    borderColor: 'rgba(255, 255, 255, 0.55)',
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    opacity: 0.5,
+    zIndex: 1,
+  },
+  cardTopHighlight: {
+    backgroundColor: 'rgba(255, 255, 255, 0.58)',
+    height: 1,
+    left: spacing.sm,
+    position: 'absolute',
+    right: spacing.sm,
+    top: spacing.xs,
+    zIndex: 2,
   },
   metaArea: {
     gap: spacing.xs,
@@ -90,7 +111,9 @@ const styles = StyleSheet.create({
   },
   thumbnailWrap: {
     aspectRatio: 0.82,
-    backgroundColor: colors.accentSoft,
+    backgroundColor: colors.surfaceInset,
+    borderBottomColor: colors.borderSoft,
+    borderBottomWidth: 1,
     position: 'relative',
   },
 });

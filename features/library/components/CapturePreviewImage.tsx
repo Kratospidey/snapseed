@@ -124,7 +124,7 @@ function isSamePreviewSource(currentSource: CapturePreviewResolution, nextSource
 
 const styles = StyleSheet.create({
   imageBase: {
-    backgroundColor: colors.accentSoft,
+    backgroundColor: colors.surfaceInset,
     height: '100%',
     width: '100%',
   },

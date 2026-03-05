@@ -1,8 +1,8 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { AppText } from '@/components/primitives/AppText';
+import { AppChip } from '@/components/primitives/AppChip';
 import type { LibraryViewMode } from '@/types/domain';
-import { colors, spacing } from '@/theme';
+import { colors, radii, spacing } from '@/theme';
 
 type LibraryViewModeToggleProps = {
   onChange: (value: LibraryViewMode) => void;
@@ -26,34 +26,19 @@ type ToggleOptionProps = {
 
 function ToggleOption({ isActive, label, onPress }: ToggleOptionProps) {
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={[styles.option, isActive ? styles.optionActive : undefined]}>
-      <AppText color={isActive ? colors.surface : colors.textMuted} style={styles.optionLabel} variant="caption">
-        {label}
-      </AppText>
-    </Pressable>
+    <AppChip label={label} onPress={onPress} selected={isActive} />
   );
 }
 
 const styles = StyleSheet.create({
-  option: {
-    borderRadius: 999,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  optionActive: {
-    backgroundColor: colors.text,
-  },
-  optionLabel: {
-    fontWeight: '700',
-  },
   toggleShell: {
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 999,
+    backgroundColor: colors.surfaceGlass,
+    borderColor: colors.borderSoft,
+    borderRadius: radii.pill,
     borderWidth: 1,
     flexDirection: 'row',
     gap: spacing.xs,
-    padding: 4,
+    padding: spacing.xxs,
   },
 });

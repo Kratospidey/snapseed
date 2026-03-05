@@ -1,10 +1,21 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback } from 'react';
-import { FlatList, Pressable, RefreshControl, SafeAreaView, StyleSheet, View } from 'react-native';
+import {
+  FlatList,
+  LayoutAnimation,
+  Platform,
+  RefreshControl,
+  SafeAreaView,
+  StyleSheet,
+  UIManager,
+  View,
+} from 'react-native';
 
+import { AppButton } from '@/components/primitives/AppButton';
 import { AppText } from '@/components/primitives/AppText';
+import { GlassSurface } from '@/components/primitives/GlassSurface';
 import type { LibrarySortOption } from '@/modules/captures/capture.types';
-import { colors, spacing } from '@/theme';
+import { colors, radii, shadows, spacing } from '@/theme';
 
 import { useLibraryScreen } from '../hooks/useLibraryScreen';
 import type { LibraryFeedItem, LibrarySortDescriptor } from '../types';
@@ -55,6 +66,21 @@ export function LibraryScreen() {
     ({ item }: { item: LibraryFeedItem }) => <LibraryListRow item={item} onPressCapture={openCapture} />,
     [openCapture],
   );
+  const handleChangeViewMode = useCallback(
+    (nextMode: 'grid' | 'list') => {
+      if (nextMode === viewMode) {
+        return;
+      }
+
+      if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+        UIManager.setLayoutAnimationEnabledExperimental(true);
+      }
+
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setViewMode(nextMode);
+    },
+    [setViewMode, viewMode],
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -69,57 +95,59 @@ export function LibraryScreen() {
           </View>
         </View>
       ) : (
-        <FlatList
-          key={viewMode}
-          ListEmptyComponent={<EmptyState onImport={openImport} smartViewLabel={resolveSmartViewLabel(data?.smartView)} />}
-          ListHeaderComponent={
-            <View style={styles.headerContent}>
-              <View style={styles.heroRow}>
-                <View style={styles.heroCopy}>
-                  <AppText variant="eyebrow">SnapBrain</AppText>
-                  <AppText variant="display">Library</AppText>
-                  <AppText color={colors.textMuted}>
-                    Global, folderless browsing for every Capture in one place.
-                  </AppText>
+        <View key={`library-feed-${viewMode}`} style={styles.feedWrap}>
+          <FlatList
+            key={viewMode}
+            ListEmptyComponent={<EmptyState onImport={openImport} smartViewLabel={resolveSmartViewLabel(data?.smartView)} />}
+            ListHeaderComponent={
+              <View style={styles.headerContent}>
+                <View style={styles.heroRow}>
+                  <View style={styles.heroCopy}>
+                    <AppText variant="eyebrow">SnapBrain</AppText>
+                    <AppText variant="display">Library</AppText>
+                    <AppText color={colors.textMuted}>
+                      Global, folderless browsing for every Capture in one place.
+                    </AppText>
+                  </View>
+                  <LibraryViewModeToggle onChange={handleChangeViewMode} value={viewMode} />
                 </View>
-                <LibraryViewModeToggle onChange={setViewMode} value={viewMode} />
-              </View>
 
-              <LibrarySmartSections
-                activeTagCount={data?.activeTagCount ?? 0}
-                graveyardCount={data?.graveyardCount ?? 0}
-                onOpenTags={openTagsLibrary}
-                onSelectSmartView={setSmartView}
-                reminderCount={data?.reminderCount ?? 0}
-                selectedSmartView={data?.smartView ?? 'recent'}
-                topTags={data?.topTags ?? []}
-                totalCount={data?.totalCount ?? 0}
-                unsortedCount={data?.unsortedCount ?? 0}
-              />
+                <LibrarySmartSections
+                  activeTagCount={data?.activeTagCount ?? 0}
+                  graveyardCount={data?.graveyardCount ?? 0}
+                  onOpenTags={openTagsLibrary}
+                  onSelectSmartView={setSmartView}
+                  reminderCount={data?.reminderCount ?? 0}
+                  selectedSmartView={data?.smartView ?? 'recent'}
+                  topTags={data?.topTags ?? []}
+                  totalCount={data?.totalCount ?? 0}
+                  unsortedCount={data?.unsortedCount ?? 0}
+                />
 
-              <View style={styles.sectionHeader}>
-                <View>
-                  <AppText variant="title">{resolveSmartViewLabel(data?.smartView)}</AppText>
-                  <AppText color={colors.textMuted} variant="caption">
-                    {items.length} visible Capture{items.length === 1 ? '' : 's'}
-                  </AppText>
+                <View style={styles.sectionHeader}>
+                  <View>
+                    <AppText variant="title">{resolveSmartViewLabel(data?.smartView)}</AppText>
+                    <AppText color={colors.textMuted} variant="caption">
+                      {items.length} visible Capture{items.length === 1 ? '' : 's'}
+                    </AppText>
+                  </View>
                 </View>
-              </View>
 
-              <LibrarySortControls onChange={setSort} options={SORT_OPTIONS} selected={sort} />
-            </View>
-          }
-          columnWrapperStyle={viewMode === 'grid' ? styles.gridRow : undefined}
-          contentContainerStyle={styles.listContent}
-          data={items}
-          keyExtractor={(item) => item.id}
-          numColumns={viewMode === 'grid' ? 2 : 1}
-          refreshControl={
-            <RefreshControl refreshing={isRefreshing} tintColor={colors.accent} onRefresh={refresh} />
-          }
-          renderItem={viewMode === 'grid' ? renderGridItem : renderListItem}
-          showsVerticalScrollIndicator={false}
-        />
+                <LibrarySortControls onChange={setSort} options={SORT_OPTIONS} selected={sort} />
+              </View>
+            }
+            columnWrapperStyle={viewMode === 'grid' ? styles.gridRow : undefined}
+            contentContainerStyle={styles.listContent}
+            data={items}
+            keyExtractor={(item) => item.id}
+            numColumns={viewMode === 'grid' ? 2 : 1}
+            refreshControl={
+              <RefreshControl refreshing={isRefreshing} tintColor={colors.accent} onRefresh={refresh} />
+            }
+            renderItem={viewMode === 'grid' ? renderGridItem : renderListItem}
+            showsVerticalScrollIndicator={false}
+          />
+        </View>
       )}
     </SafeAreaView>
   );
@@ -127,19 +155,19 @@ export function LibraryScreen() {
 
 function EmptyState({ onImport, smartViewLabel }: { onImport: () => void; smartViewLabel: string }) {
   return (
-    <View style={styles.emptyState}>
-      <AppText variant="title">No Captures yet</AppText>
-      <AppText color={colors.textMuted}>
-        {smartViewLabel === 'Recently Added'
-          ? 'Imported screenshots become structured Captures here with tags, notes, reminders, and smart sections.'
-          : `There are no Captures in ${smartViewLabel.toLowerCase()} right now.`}
-      </AppText>
-      <Pressable accessibilityRole="button" onPress={onImport} style={styles.emptyButton}>
-        <AppText color={colors.surface} variant="action">
-          Add Capture
+    <GlassSurface style={styles.emptyState} useBlur={false} variant="card">
+      <View style={styles.emptyContent}>
+        <AppText variant="title">No Captures yet</AppText>
+        <AppText color={colors.textMuted}>
+          {smartViewLabel === 'Recently Added'
+            ? 'Imported screenshots become structured Captures here with tags, notes, reminders, and smart sections.'
+            : `There are no Captures in ${smartViewLabel.toLowerCase()} right now.`}
         </AppText>
-      </Pressable>
-    </View>
+        <AppButton onPress={onImport} style={styles.emptyButton}>
+          Add Capture
+        </AppButton>
+      </View>
+    </GlassSurface>
   );
 }
 
@@ -159,21 +187,19 @@ function resolveSmartViewLabel(smartView: string | undefined) {
 
 const styles = StyleSheet.create({
   emptyButton: {
-    alignItems: 'center',
-    backgroundColor: colors.accent,
-    borderRadius: 999,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    alignSelf: 'center',
+    minWidth: 160,
   },
   emptyState: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 28,
-    borderWidth: 1,
-    gap: spacing.sm,
     marginTop: spacing.sm,
+  },
+  emptyContent: {
+    alignItems: 'center',
+    gap: spacing.sm,
     padding: spacing.lg,
+  },
+  feedWrap: {
+    flex: 1,
   },
   gridItem: {
     flex: 1,
@@ -204,10 +230,11 @@ const styles = StyleSheet.create({
   },
   loadingCard: {
     aspectRatio: 0.82,
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 24,
+    backgroundColor: colors.surfaceGlass,
+    borderColor: colors.borderSoft,
+    borderRadius: radii.xl,
     borderWidth: 1,
+    ...shadows.sm,
   },
   loadingGrid: {
     flexDirection: 'row',

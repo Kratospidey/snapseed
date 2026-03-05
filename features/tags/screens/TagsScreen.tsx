@@ -2,17 +2,13 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useMemo, useState } from 'react';
-import {
-  Alert,
-  FlatList,
-  Pressable,
-  SafeAreaView,
-  StyleSheet,
-  TextInput,
-  View,
-} from 'react-native';
+import { Alert, FlatList, SafeAreaView, StyleSheet, View } from 'react-native';
 
+import { AppButton } from '@/components/primitives/AppButton';
+import { AppIconButton } from '@/components/primitives/AppIconButton';
+import { AppInput } from '@/components/primitives/AppInput';
 import { AppText } from '@/components/primitives/AppText';
+import { GlassSurface } from '@/components/primitives/GlassSurface';
 import { routes } from '@/constants/routes';
 import { TagService } from '@/modules/tags/tag.service';
 import { colors, spacing } from '@/theme';
@@ -136,16 +132,16 @@ export function TagsScreen() {
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
           isLoading ? (
-            <View style={styles.emptyCard}>
+            <GlassSurface style={styles.emptyCard} useBlur={false}>
               <AppText color={colors.textMuted}>Loading tag library...</AppText>
-            </View>
+            </GlassSurface>
           ) : (
-            <View style={styles.emptyCard}>
+            <GlassSurface style={styles.emptyCard} useBlur={false}>
               <AppText variant="title">No tags yet</AppText>
               <AppText color={colors.textMuted}>
                 Create canonical tags here, then apply them from Capture detail or batch import.
               </AppText>
-            </View>
+            </GlassSurface>
           )
         }
         ListHeaderComponent={
@@ -158,34 +154,27 @@ export function TagsScreen() {
               </AppText>
             </View>
 
-            <View style={styles.createCard}>
+            <GlassSurface style={styles.createCard} useBlur={false}>
               <View style={styles.inputWrap}>
                 <AppText variant="eyebrow">Create tag</AppText>
-                <TextInput
+                <AppInput
                   autoCapitalize="none"
                   autoCorrect={false}
                   onChangeText={setCreateLabel}
                   placeholder="study, receipts, 🧾"
-                  placeholderTextColor={colors.textMuted}
                   style={styles.textInput}
                   value={createLabel}
                 />
               </View>
 
-              <Pressable
-                accessibilityRole="button"
+              <AppButton
                 disabled={!createLabel.trim() || pendingAction === 'create'}
                 onPress={() => void handleCreate()}
-                style={[
-                  styles.primaryButton,
-                  (!createLabel.trim() || pendingAction === 'create') && styles.buttonDisabled,
-                ]}
+                style={styles.primaryButton}
               >
-                <AppText color={colors.surface} variant="action">
-                  Add tag
-                </AppText>
-              </Pressable>
-            </View>
+                Add tag
+              </AppButton>
+            </GlassSurface>
           </View>
         }
         renderItem={({ item }) => {
@@ -194,48 +183,44 @@ export function TagsScreen() {
             pendingAction === `delete:${item.id}` || pendingAction === `rename:${item.id}` || pendingAction === 'create';
 
           return (
-            <View style={styles.tagCard}>
+            <GlassSurface style={styles.tagCard} useBlur={false}>
               {isEditing ? (
                 <View style={styles.editorBlock}>
-                  <TextInput
+                  <AppInput
                     autoCapitalize="none"
                     autoCorrect={false}
                     onChangeText={setEditingLabel}
                     placeholder="Rename or merge tag"
-                    placeholderTextColor={colors.textMuted}
                     style={styles.textInput}
                     value={editingLabel}
                   />
 
                   <View style={styles.inlineActions}>
-                    <Pressable
-                      accessibilityRole="button"
+                    <AppButton
                       disabled={!editingLabel.trim() || isBusy}
                       onPress={() => void handleRename(item.id)}
-                      style={[styles.primaryButton, (!editingLabel.trim() || isBusy) && styles.buttonDisabled]}
+                      style={styles.primaryButton}
                     >
-                      <AppText color={colors.surface} variant="action">
-                        Save
-                      </AppText>
-                    </Pressable>
-                    <Pressable
-                      accessibilityRole="button"
+                      Save
+                    </AppButton>
+                    <AppButton
                       disabled={isBusy}
                       onPress={() => {
                         setEditingTagId(null);
                         setEditingLabel('');
                       }}
                       style={styles.secondaryButton}
+                      tone="secondary"
                     >
-                      <AppText variant="action">Cancel</AppText>
-                    </Pressable>
+                      Cancel
+                    </AppButton>
                   </View>
                 </View>
               ) : (
-                <Pressable
-                  accessibilityRole="button"
+                <AppButton
                   onPress={() => router.push(routes.tagDetail(item.id))}
                   style={styles.tagMain}
+                  tone="secondary"
                 >
                   <View style={styles.tagCopy}>
                     <AppText variant="title">#{item.label}</AppText>
@@ -248,29 +233,22 @@ export function TagsScreen() {
                   </View>
 
                   <View style={styles.rowActions}>
-                    <Pressable
-                      accessibilityRole="button"
-                      disabled={isBusy}
+                    <AppIconButton
                       onPress={() => {
                         setEditingTagId(item.id);
                         setEditingLabel(item.label);
                       }}
-                      style={styles.iconButton}
+                      size="sm"
                     >
                       <Ionicons color={colors.text} name="create-outline" size={18} />
-                    </Pressable>
-                    <Pressable
-                      accessibilityRole="button"
-                      disabled={isBusy}
-                      onPress={() => handleDelete(item)}
-                      style={styles.iconButton}
-                    >
+                    </AppIconButton>
+                    <AppIconButton onPress={() => handleDelete(item)} size="sm">
                       <Ionicons color={colors.danger} name="trash-outline" size={18} />
-                    </Pressable>
+                    </AppIconButton>
                   </View>
-                </Pressable>
+                </AppButton>
               )}
-            </View>
+            </GlassSurface>
           );
         }}
         showsVerticalScrollIndicator={false}
@@ -290,9 +268,6 @@ function formatLastUsed(timestamp: number | null) {
 }
 
 const styles = StyleSheet.create({
-  buttonDisabled: {
-    opacity: 0.5,
-  },
   content: {
     gap: spacing.md,
     paddingBottom: 120,
@@ -300,10 +275,6 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
   },
   createCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 24,
-    borderWidth: 1,
     gap: spacing.md,
     padding: spacing.md,
   },
@@ -311,10 +282,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   emptyCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 24,
-    borderWidth: 1,
     gap: spacing.sm,
     padding: spacing.lg,
   },
@@ -325,15 +292,6 @@ const styles = StyleSheet.create({
   heroCopy: {
     gap: spacing.xs,
   },
-  iconButton: {
-    alignItems: 'center',
-    borderColor: colors.border,
-    borderRadius: 999,
-    borderWidth: 1,
-    height: 38,
-    justifyContent: 'center',
-    width: 38,
-  },
   inlineActions: {
     flexDirection: 'row',
     gap: spacing.sm,
@@ -342,13 +300,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   primaryButton: {
-    alignItems: 'center',
-    backgroundColor: colors.accent,
-    borderRadius: 999,
-    justifyContent: 'center',
-    minHeight: 46,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    minWidth: 120,
   },
   rowActions: {
     flexDirection: 'row',
@@ -359,20 +311,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   secondaryButton: {
-    alignItems: 'center',
-    borderColor: colors.border,
-    borderRadius: 999,
-    borderWidth: 1,
-    justifyContent: 'center',
-    minHeight: 46,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    minWidth: 120,
   },
   tagCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 24,
-    borderWidth: 1,
     padding: spacing.md,
   },
   tagCopy: {
@@ -380,18 +321,15 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   tagMain: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.md,
+    backgroundColor: 'transparent',
+    borderColor: 'transparent',
+    borderWidth: 0,
+    justifyContent: 'space-between',
+    minHeight: 0,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
   },
   textInput: {
-    backgroundColor: colors.background,
-    borderColor: colors.border,
-    borderRadius: 18,
-    borderWidth: 1,
-    color: colors.text,
     minHeight: 48,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
   },
 });

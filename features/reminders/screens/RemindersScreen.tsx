@@ -1,8 +1,11 @@
-import { Alert, Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import { useState } from 'react';
 
 import { DateTimeFieldPicker } from '@/components/reminders/DateTimeFieldPicker';
+import { AppButton } from '@/components/primitives/AppButton';
+import { AppChip } from '@/components/primitives/AppChip';
 import { AppText } from '@/components/primitives/AppText';
+import { GlassSurface } from '@/components/primitives/GlassSurface';
 import { colors, spacing } from '@/theme';
 
 import { ReminderRow } from '../components/ReminderRow';
@@ -84,28 +87,26 @@ export function RemindersScreen() {
         </View>
 
         {permissionState === 'denied' ? (
-          <View style={styles.bannerWarning}>
+          <GlassSurface style={styles.bannerWarning} useBlur={false}>
             <AppText variant="action">Notifications are disabled</AppText>
             <AppText color={colors.textMuted}>
               Reminders still work in-app, but lock-screen alerts are off until notifications are enabled.
             </AppText>
-            <Pressable accessibilityRole="button" onPress={openNotificationSettings} style={styles.inlineAction}>
-              <AppText variant="caption">Enable notifications</AppText>
-            </Pressable>
-          </View>
+            <AppChip label="Enable notifications" onPress={openNotificationSettings} />
+          </GlassSurface>
         ) : null}
 
         {isLoading ? (
-          <View style={styles.card}>
+          <GlassSurface style={styles.card} useBlur={false}>
             <AppText color={colors.textMuted}>Loading reminder feed...</AppText>
-          </View>
+          </GlassSurface>
         ) : !hasAnyRows ? (
-          <View style={styles.card}>
+          <GlassSurface style={styles.card} useBlur={false}>
             <AppText variant="title">No reminders yet</AppText>
             <AppText color={colors.textMuted}>
               Add reminders from import review or Capture detail, then resolve them from this tab.
             </AppText>
-          </View>
+          </GlassSurface>
         ) : (
           <>
             {feed.overdue.length > 0 ? (
@@ -178,7 +179,7 @@ export function RemindersScreen() {
         )}
 
         {rescheduleDraft ? (
-          <View style={styles.card}>
+          <GlassSurface style={styles.card} useBlur={false}>
             <AppText variant="title">Reschedule reminder</AppText>
             <View style={styles.rescheduleRow}>
               <View style={styles.rescheduleField}>
@@ -221,25 +222,13 @@ export function RemindersScreen() {
               </View>
             </View>
             <View style={styles.actionRow}>
-              <Pressable accessibilityRole="button" onPress={() => void handleSaveReschedule()} style={styles.primaryButton}>
-                <AppText color={colors.surface} variant="action">
-                  Save
-                </AppText>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => setRescheduleDraft(null)}
-                style={styles.inlineAction}
-              >
-                <AppText variant="caption">Cancel</AppText>
-              </Pressable>
+              <AppButton onPress={() => void handleSaveReschedule()}>Save</AppButton>
+              <AppChip label="Cancel" onPress={() => setRescheduleDraft(null)} />
             </View>
-          </View>
+          </GlassSurface>
         ) : null}
 
-        <Pressable accessibilityRole="button" onPress={() => void refresh()} style={styles.inlineAction}>
-          <AppText variant="caption">Refresh reminder state</AppText>
-        </Pressable>
+        <AppChip label="Refresh reminder state" onPress={() => void refresh()} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -252,18 +241,10 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   bannerWarning: {
-    backgroundColor: '#F7EEE0',
-    borderColor: '#E6BF88',
-    borderRadius: 20,
-    borderWidth: 1,
     gap: spacing.sm,
     padding: spacing.md,
   },
   card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 22,
-    borderWidth: 1,
     gap: spacing.sm,
     padding: spacing.md,
   },
@@ -276,27 +257,8 @@ const styles = StyleSheet.create({
   headerCopy: {
     gap: spacing.xs,
   },
-  inlineAction: {
-    alignItems: 'center',
-    borderColor: colors.border,
-    borderRadius: 999,
-    borderWidth: 1,
-    justifyContent: 'center',
-    minHeight: 40,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-  },
   itemsList: {
     gap: spacing.sm,
-  },
-  primaryButton: {
-    alignItems: 'center',
-    backgroundColor: colors.accent,
-    borderRadius: 999,
-    justifyContent: 'center',
-    minHeight: 42,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
   },
   rescheduleField: {
     flex: 1,

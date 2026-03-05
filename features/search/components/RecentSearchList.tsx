@@ -1,6 +1,8 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/primitives/AppText';
+import { GlassSurface } from '@/components/primitives/GlassSurface';
+import { TactilePressable } from '@/components/primitives/TactilePressable';
 import type { RecentSearchEntry, SearchFilters } from '@/modules/search/search.types';
 import { colors, spacing } from '@/theme';
 
@@ -29,24 +31,29 @@ export function RecentSearchList({
           ].filter(Boolean);
 
           return (
-            <Pressable
+            <TactilePressable
               accessibilityRole="button"
+              intensity="soft"
               key={entry.id}
               onPress={() => onPressItem(entry)}
-              style={styles.item}
+              style={styles.itemPressable}
             >
-              <View style={styles.itemCopy}>
-                <AppText variant="action">{entry.queryText}</AppText>
-                {filterLabels.length > 0 ? (
+              <GlassSurface style={styles.item} useBlur={false}>
+                <View style={styles.row}>
+                  <View style={styles.itemCopy}>
+                    <AppText variant="action">{entry.queryText}</AppText>
+                    {filterLabels.length > 0 ? (
+                      <AppText color={colors.textMuted} variant="caption">
+                        {filterLabels.join(' • ')}
+                      </AppText>
+                    ) : null}
+                  </View>
                   <AppText color={colors.textMuted} variant="caption">
-                    {filterLabels.join(' • ')}
+                    {formatLastUsed(entry.lastUsedAt)}
                   </AppText>
-                ) : null}
-              </View>
-              <AppText color={colors.textMuted} variant="caption">
-                {formatLastUsed(entry.lastUsedAt)}
-              </AppText>
-            </Pressable>
+                </View>
+              </GlassSurface>
+            </TactilePressable>
           );
         })}
       </View>
@@ -62,15 +69,10 @@ function formatLastUsed(lastUsedAt: number) {
 
 const styles = StyleSheet.create({
   item: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 20,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: spacing.md,
-    justifyContent: 'space-between',
     padding: spacing.md,
+  },
+  itemPressable: {
+    borderRadius: 20,
   },
   itemCopy: {
     flex: 1,
@@ -81,5 +83,11 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: spacing.md,
+  },
+  row: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.md,
+    justifyContent: 'space-between',
   },
 });

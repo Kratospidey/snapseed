@@ -2,9 +2,11 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useMemo, useState } from 'react';
-import { FlatList, Pressable, SafeAreaView, StyleSheet, View } from 'react-native';
+import { FlatList, SafeAreaView, StyleSheet, View } from 'react-native';
 
+import { AppIconButton } from '@/components/primitives/AppIconButton';
 import { AppText } from '@/components/primitives/AppText';
+import { GlassSurface } from '@/components/primitives/GlassSurface';
 import { routes } from '@/constants/routes';
 import { CaptureService } from '@/modules/captures/capture.service';
 import { TagService } from '@/modules/tags/tag.service';
@@ -73,7 +75,7 @@ export function TagCapturesScreen() {
         data={captures}
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
-          <View style={styles.emptyCard}>
+          <GlassSurface style={styles.emptyCard} useBlur={false}>
             {isLoading ? (
               <AppText color={colors.textMuted}>Loading related Captures...</AppText>
             ) : tag ? (
@@ -89,14 +91,14 @@ export function TagCapturesScreen() {
                 <AppText color={colors.textMuted}>This tag may have been renamed, merged, or deleted.</AppText>
               </>
             )}
-          </View>
+          </GlassSurface>
         }
         ListHeaderComponent={
           <View style={styles.header}>
             <View style={styles.headerRow}>
-              <Pressable accessibilityRole="button" hitSlop={8} onPress={() => router.back()} style={styles.iconButton}>
+              <AppIconButton onPress={() => router.back()}>
                 <Ionicons color={colors.text} name="arrow-back" size={22} />
-              </Pressable>
+              </AppIconButton>
               <View style={styles.headerCopy}>
                 <AppText variant="eyebrow">Tag</AppText>
                 <AppText variant="title">{tag ? `#${tag.label}` : 'Related Captures'}</AppText>
@@ -152,16 +154,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: spacing.sm,
-  },
-  iconButton: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 999,
-    borderWidth: 1,
-    height: 42,
-    justifyContent: 'center',
-    width: 42,
   },
   safeArea: {
     backgroundColor: colors.background,

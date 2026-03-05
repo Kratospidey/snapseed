@@ -1,9 +1,12 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 
+import { AppChip } from '@/components/primitives/AppChip';
 import { AppText } from '@/components/primitives/AppText';
+import { GlassSurface } from '@/components/primitives/GlassSurface';
+import { TactilePressable } from '@/components/primitives/TactilePressable';
 import { routes } from '@/constants/routes';
 import { ReminderService } from '@/modules/reminders/reminder.service';
 import { SettingsService } from '@/modules/settings/settings.service';
@@ -53,7 +56,7 @@ export function SettingsScreen() {
 
         <View style={styles.section}>
           <AppText variant="title">Preferences</AppText>
-          <View style={styles.card}>
+          <GlassSurface style={styles.card} useBlur={false}>
             <AppText variant="action">Default Library view mode</AppText>
             <View style={styles.inlineRow}>
               <ChoiceChip
@@ -70,7 +73,7 @@ export function SettingsScreen() {
             <AppText color={colors.textMuted} variant="caption">
               Last chosen view mode is still remembered per usage; this default is used when no prior choice exists.
             </AppText>
-          </View>
+          </GlassSurface>
         </View>
 
         <View style={styles.section}>
@@ -107,12 +110,12 @@ export function SettingsScreen() {
 
         <View style={styles.section}>
           <AppText variant="title">Future modules</AppText>
-          <View style={styles.card}>
+          <GlassSurface style={styles.card} useBlur={false}>
             <AppText variant="action">OCR (coming later)</AppText>
             <AppText color={colors.textMuted}>
               OCR search is not part of MVP yet. Current search covers tags and note text only.
             </AppText>
-          </View>
+          </GlassSurface>
         </View>
 
         <View style={styles.section}>
@@ -142,17 +145,7 @@ function ChoiceChip({
   label: string;
   onPress: () => void;
 }) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={[styles.choiceChip, active ? styles.choiceChipActive : null]}
-    >
-      <AppText color={active ? colors.surface : colors.text} variant="caption">
-        {label}
-      </AppText>
-    </Pressable>
-  );
+  return <AppChip label={label} onPress={onPress} selected={active} />;
 }
 
 function SettingsLinkRow({
@@ -165,36 +158,21 @@ function SettingsLinkRow({
   onPress: () => void;
 }) {
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={styles.card}>
-      <AppText variant="action">{label}</AppText>
-      <AppText color={colors.textMuted} variant="caption">
-        {description}
-      </AppText>
-    </Pressable>
+    <TactilePressable accessibilityRole="button" intensity="soft" onPress={onPress}>
+      <GlassSurface style={styles.card} useBlur={false}>
+        <AppText variant="action">{label}</AppText>
+        <AppText color={colors.textMuted} variant="caption">
+          {description}
+        </AppText>
+      </GlassSurface>
+    </TactilePressable>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 20,
-    borderWidth: 1,
     gap: spacing.xs,
     padding: spacing.md,
-  },
-  choiceChip: {
-    alignItems: 'center',
-    borderColor: colors.border,
-    borderRadius: 999,
-    borderWidth: 1,
-    minWidth: 72,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-  },
-  choiceChipActive: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
   },
   content: {
     gap: spacing.md,

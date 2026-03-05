@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { FlatList, SafeAreaView, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/primitives/AppText';
+import { GlassSurface } from '@/components/primitives/GlassSurface';
 import { LibraryListRow } from '@/features/library/components/LibraryListRow';
 import type { LibraryCaptureRecord } from '@/modules/captures/capture.types';
 import { colors, spacing } from '@/theme';
@@ -48,23 +49,23 @@ export function SearchScreen() {
                 recentSearches={recentSearches}
               />
             ) : (
-              <View style={styles.emptyState}>
+              <GlassSurface style={styles.emptyState} useBlur={false}>
                 <AppText variant="title">Search your Captures</AppText>
                 <AppText color={colors.textMuted}>
                   Search tags and note text instantly, then narrow results with smart filters like reminders,
                   unsorted, graveyard, or a date range.
                 </AppText>
-              </View>
+              </GlassSurface>
             )
           ) : (
-            <View style={styles.emptyState}>
+            <GlassSurface style={styles.emptyState} useBlur={false}>
               <AppText variant="title">{isLoading ? 'Searching…' : 'No Captures match'}</AppText>
               <AppText color={colors.textMuted}>
                 {isLoading
                   ? 'Looking across tags and note text.'
                   : 'Try a different query or relax one of the active filters.'}
               </AppText>
-            </View>
+            </GlassSurface>
           )
         }
         ListHeaderComponent={

@@ -4,7 +4,7 @@ import { StyleSheet, Text } from 'react-native';
 
 import { colors, typography } from '@/theme';
 
-type AppTextVariant = 'body' | 'caption' | 'action' | 'eyebrow' | 'title' | 'display';
+type AppTextVariant = 'body' | 'caption' | 'action' | 'eyebrow' | 'label' | 'title' | 'display';
 
 type AppTextProps = PropsWithChildren<{
   color?: string;
@@ -35,9 +35,13 @@ const variantStyles = StyleSheet.create({
     ...typography.eyebrow,
     color: colors.accent,
   },
+  label: {
+    ...typography.label,
+    color: colors.textPrimary,
+  },
   title: {
     ...typography.title,
-    color: colors.text,
+    color: colors.textPrimary,
   },
 });
 

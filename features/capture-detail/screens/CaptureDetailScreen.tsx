@@ -16,11 +16,12 @@ import {
 
 import { DateTimeFieldPicker } from '@/components/reminders/DateTimeFieldPicker';
 import { AppText } from '@/components/primitives/AppText';
+import { TactilePressable } from '@/components/primitives/TactilePressable';
 import { CAPTURE_NOTE_MAX_LENGTH } from '@/constants/limits';
 import { routes } from '@/constants/routes';
 import { CaptureService } from '@/modules/captures/capture.service';
 import { GraveyardService } from '@/modules/graveyard/graveyard.service';
-import { colors, spacing, typography } from '@/theme';
+import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import {
   formatCaptureFileSize,
@@ -687,15 +688,16 @@ function QuickActionButton({
   onPress: () => void;
 }) {
   return (
-    <Pressable
+    <TactilePressable
       accessibilityRole="button"
       disabled={disabled}
+      intensity="soft"
       onPress={onPress}
       style={[styles.quickActionButton, disabled && styles.actionDisabled]}
     >
       <Ionicons color={colors.text} name={iconName} size={18} />
       <AppText variant="caption">{label}</AppText>
-    </Pressable>
+    </TactilePressable>
   );
 }
 
@@ -711,16 +713,17 @@ function SectionButton({
   onPress: () => void;
 }) {
   return (
-    <Pressable
+    <TactilePressable
       accessibilityRole="button"
       disabled={disabled}
+      intensity="strong"
       onPress={onPress}
       style={[styles.primaryButton, disabled && styles.actionDisabled]}
     >
       <AppText color={colors.surface} variant="action">
         {busy ? 'Saving...' : label}
       </AppText>
-    </Pressable>
+    </TactilePressable>
   );
 }
 
@@ -749,12 +752,13 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   dangerCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceGlass,
     borderColor: colors.danger,
-    borderRadius: 22,
+    borderRadius: radii.lg,
     borderWidth: 1,
     gap: spacing.md,
     padding: spacing.md,
+    ...shadows.sm,
   },
   editorCard: {
     gap: spacing.sm,
@@ -768,30 +772,31 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   graveyardBanner: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 20,
+    backgroundColor: colors.surfaceGlass,
+    borderColor: colors.borderSoft,
+    borderRadius: radii.lg,
     borderWidth: 1,
     gap: spacing.sm,
     padding: spacing.md,
   },
   iconButton: {
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 999,
+    backgroundColor: colors.surfaceRaised,
+    borderColor: colors.borderSoft,
+    borderRadius: radii.pill,
     borderWidth: 1,
     height: 42,
     justifyContent: 'center',
     width: 42,
   },
   infoCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 22,
+    backgroundColor: colors.surfaceGlass,
+    borderColor: colors.borderSoft,
+    borderRadius: radii.lg,
     borderWidth: 1,
     gap: spacing.xs,
     padding: spacing.md,
+    ...shadows.sm,
   },
   inlineButtonRow: {
     flexDirection: 'row',
@@ -821,24 +826,26 @@ const styles = StyleSheet.create({
     minHeight: 120,
   },
   placeholderCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 24,
+    backgroundColor: colors.surfaceGlass,
+    borderColor: colors.borderSoft,
+    borderRadius: radii.xl,
     borderWidth: 1,
     gap: spacing.sm,
     minHeight: 240,
     padding: spacing.lg,
+    ...shadows.sm,
   },
   previewAction: {
     color: colors.surface,
   },
   previewCard: {
     alignSelf: 'stretch',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 28,
+    backgroundColor: colors.surfaceGlass,
+    borderColor: colors.borderSoft,
+    borderRadius: radii.xl,
     borderWidth: 1,
     overflow: 'hidden',
+    ...shadows.md,
   },
   previewOverlay: {
     alignItems: 'center',
@@ -867,9 +874,9 @@ const styles = StyleSheet.create({
   },
   quickActionButton: {
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 20,
+    backgroundColor: colors.surfaceRaised,
+    borderColor: colors.borderSoft,
+    borderRadius: radii.lg,
     borderWidth: 1,
     flex: 1,
     gap: spacing.xs,
@@ -891,8 +898,8 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     alignItems: 'center',
-    borderColor: colors.border,
-    borderRadius: 999,
+    borderColor: colors.borderSoft,
+    borderRadius: radii.pill,
     borderWidth: 1,
     justifyContent: 'center',
     minHeight: 46,
@@ -905,9 +912,9 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   textInput: {
-    backgroundColor: colors.background,
-    borderColor: colors.border,
-    borderRadius: 18,
+    backgroundColor: colors.surfaceInset,
+    borderColor: colors.borderSoft,
+    borderRadius: radii.md,
     borderWidth: 1,
     color: colors.text,
     minHeight: 48,

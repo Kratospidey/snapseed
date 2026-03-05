@@ -1,5 +1,6 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { AppChip } from '@/components/primitives/AppChip';
 import { AppText } from '@/components/primitives/AppText';
 import { colors, spacing } from '@/theme';
 
@@ -22,25 +23,13 @@ export function ReminderSection({ count, ctaLabel, onPressCta, subtitle, title }
         </AppText>
       </View>
       {ctaLabel && onPressCta ? (
-        <Pressable accessibilityRole="button" onPress={onPressCta} style={styles.sectionButton}>
-          <AppText variant="caption">{ctaLabel}</AppText>
-        </Pressable>
+        <AppChip label={ctaLabel} onPress={onPressCta} />
       ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  sectionButton: {
-    alignItems: 'center',
-    borderColor: colors.border,
-    borderRadius: 999,
-    borderWidth: 1,
-    justifyContent: 'center',
-    minHeight: 36,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-  },
   sectionCopy: {
     flex: 1,
     gap: spacing.xs,

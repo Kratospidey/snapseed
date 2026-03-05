@@ -1,7 +1,9 @@
 import { memo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { AppChip } from '@/components/primitives/AppChip';
 import { AppText } from '@/components/primitives/AppText';
+import { TactilePressable } from '@/components/primitives/TactilePressable';
 import { MetaBadge } from '@/features/library/components/MetaBadge';
 import type { ReminderFeedItem } from '@/modules/reminders/reminder.types';
 import { colors, spacing } from '@/theme';
@@ -31,7 +33,7 @@ function ReminderRowComponent({
   const tagPreview = item.capture.tagLabels.slice(0, 2).join(', ');
 
   return (
-    <Pressable accessibilityRole="button" onPress={onOpenCapture} style={styles.card}>
+    <TactilePressable accessibilityRole="button" intensity="soft" onPress={onOpenCapture} style={styles.card}>
       <View style={styles.headerRow}>
         <View style={styles.copy}>
           <AppText numberOfLines={1} variant="action">
@@ -52,7 +54,7 @@ function ReminderRowComponent({
           ) : null}
         </View>
         <View style={styles.badges}>
-          {isOverdue ? <MetaBadge label="Overdue" tone="danger" /> : null}
+          {isOverdue ? <OverdueBadge /> : null}
           {item.capture.isMissing ? <MetaBadge label="Missing original" tone="danger" /> : null}
           {rowActionScope === 'pending' && !item.notificationId ? (
             <MetaBadge label="In-app only" tone="neutral" />
@@ -89,8 +91,12 @@ function ReminderRowComponent({
           />
         </View>
       ) : null}
-    </Pressable>
+    </TactilePressable>
   );
+}
+
+function OverdueBadge() {
+  return <MetaBadge label="Overdue" tone="danger" />;
 }
 
 function RowActionButton({
@@ -104,16 +110,7 @@ function RowActionButton({
   label: string;
   onPress?: () => void;
 }) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      disabled={disabled || !onPress}
-      onPress={onPress}
-      style={[styles.actionButton, (disabled || !onPress) && styles.actionDisabled]}
-    >
-      <AppText variant="caption">{busy ? '...' : label}</AppText>
-    </Pressable>
-  );
+  return <AppChip disabled={disabled || !onPress} label={busy ? '...' : label} onPress={onPress} />;
 }
 
 function formatDateTime(timestamp: number) {
@@ -126,20 +123,6 @@ const REMINDER_DATE_TIME_FORMATTER = new Intl.DateTimeFormat(undefined, {
 });
 
 const styles = StyleSheet.create({
-  actionButton: {
-    alignItems: 'center',
-    borderColor: colors.border,
-    borderRadius: 14,
-    borderWidth: 1,
-    justifyContent: 'center',
-    minHeight: 34,
-    minWidth: 72,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
-  },
-  actionDisabled: {
-    opacity: 0.5,
-  },
   actionRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',

@@ -1,8 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 
+import { AppButton } from '@/components/primitives/AppButton';
+import { AppIconButton } from '@/components/primitives/AppIconButton';
 import { AppText } from '@/components/primitives/AppText';
+import { GlassSurface } from '@/components/primitives/GlassSurface';
 import { colors, spacing } from '@/theme';
 
 export function SettingsOnboardingScreen() {
@@ -12,26 +15,24 @@ export function SettingsOnboardingScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
-          <Pressable accessibilityRole="button" hitSlop={8} onPress={() => router.back()} style={styles.iconButton}>
+          <AppIconButton onPress={() => router.back()}>
             <Ionicons color={colors.text} name="arrow-back" size={22} />
-          </Pressable>
+          </AppIconButton>
           <View style={styles.headerCopy}>
             <AppText variant="eyebrow">Settings</AppText>
             <AppText variant="title">Replay onboarding</AppText>
           </View>
         </View>
 
-        <View style={styles.card}>
+        <GlassSurface style={styles.card} useBlur={false}>
           <AppText variant="action">Onboarding replay</AppText>
           <AppText color={colors.textMuted}>
             Onboarding replay entry is available for MVP flow continuity. Full onboarding routing is intentionally lightweight in this phase.
           </AppText>
-          <Pressable accessibilityRole="button" onPress={() => router.replace('/')} style={styles.primaryButton}>
-            <AppText color={colors.surface} variant="action">
-              Open app intro path
-            </AppText>
-          </Pressable>
-        </View>
+          <AppButton onPress={() => router.replace('/')} style={styles.primaryButton}>
+            Open app intro path
+          </AppButton>
+        </GlassSurface>
       </ScrollView>
     </SafeAreaView>
   );
@@ -39,10 +40,6 @@ export function SettingsOnboardingScreen() {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 20,
-    borderWidth: 1,
     gap: spacing.sm,
     padding: spacing.md,
   },
@@ -60,25 +57,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
   },
-  iconButton: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 999,
-    borderWidth: 1,
-    height: 42,
-    justifyContent: 'center',
-    width: 42,
-  },
-  primaryButton: {
-    alignItems: 'center',
-    backgroundColor: colors.accent,
-    borderRadius: 999,
-    justifyContent: 'center',
-    minHeight: 44,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
+  primaryButton: {},
   safeArea: {
     backgroundColor: colors.background,
     flex: 1,

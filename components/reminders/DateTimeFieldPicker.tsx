@@ -10,8 +10,11 @@ import {
   View,
 } from 'react-native';
 
+import { AppButton } from '@/components/primitives/AppButton';
+import { AppChip } from '@/components/primitives/AppChip';
 import { AppText } from '@/components/primitives/AppText';
-import { colors, spacing } from '@/theme';
+import { GlassSurface } from '@/components/primitives/GlassSurface';
+import { colors, radii, spacing } from '@/theme';
 
 type DateTimeFieldPickerProps = {
   accessibilityLabel?: string;
@@ -91,7 +94,7 @@ export function DateTimeFieldPicker({
         <AppText color={colors.textMuted} variant="caption">
           {label}
         </AppText>
-        <AppText>{displayValue ?? placeholder}</AppText>
+        <AppText color={displayValue ? colors.textPrimary : colors.textSecondary}>{displayValue ?? placeholder}</AppText>
       </Pressable>
 
       {isOpen && Platform.OS === 'android' ? (
@@ -105,15 +108,13 @@ export function DateTimeFieldPicker({
 
       <Modal animationType="fade" onRequestClose={() => setIsOpen(false)} transparent visible={isOpen && Platform.OS !== 'android'}>
         <View style={styles.backdrop}>
-          <View style={styles.sheet}>
+          <GlassSurface style={styles.sheet} variant="sheet">
             <View style={styles.sheetHeader}>
               <View style={styles.sheetCopy}>
                 <AppText variant="eyebrow">{mode === 'date' ? 'Pick a date' : 'Pick a time'}</AppText>
                 <AppText variant="title">{label}</AppText>
               </View>
-              <Pressable accessibilityRole="button" onPress={() => setIsOpen(false)} style={styles.secondaryButton}>
-                <AppText variant="caption">Cancel</AppText>
-              </Pressable>
+              <AppChip label="Cancel" onPress={() => setIsOpen(false)} />
             </View>
 
             <DateTimePicker
@@ -126,12 +127,8 @@ export function DateTimeFieldPicker({
               {...iosPickerAppearanceProps}
             />
 
-            <Pressable accessibilityRole="button" onPress={handleConfirm} style={styles.primaryButton}>
-              <AppText color={colors.surface} variant="action">
-                Confirm
-              </AppText>
-            </Pressable>
-          </View>
+            <AppButton onPress={handleConfirm}>Confirm</AppButton>
+          </GlassSurface>
         </View>
       </Modal>
     </>
@@ -199,15 +196,15 @@ function padTime(value: number) {
 const styles = StyleSheet.create({
   backdrop: {
     alignItems: 'center',
-    backgroundColor: 'rgba(32, 26, 22, 0.35)',
+    backgroundColor: 'rgba(30, 41, 35, 0.22)',
     flex: 1,
     justifyContent: 'center',
     padding: spacing.lg,
   },
   field: {
-    backgroundColor: colors.background,
-    borderColor: colors.border,
-    borderRadius: 16,
+    backgroundColor: colors.surfaceInset,
+    borderColor: colors.borderSoft,
+    borderRadius: radii.md,
     borderWidth: 1,
     gap: spacing.xs,
     minHeight: 52,
@@ -218,27 +215,7 @@ const styles = StyleSheet.create({
   picker: {
     alignSelf: 'stretch',
   },
-  primaryButton: {
-    alignItems: 'center',
-    backgroundColor: colors.accent,
-    borderRadius: 999,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  secondaryButton: {
-    alignItems: 'center',
-    borderColor: colors.border,
-    borderRadius: 999,
-    borderWidth: 1,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
   sheet: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 28,
-    borderWidth: 1,
     gap: spacing.md,
     maxWidth: 420,
     padding: spacing.lg,

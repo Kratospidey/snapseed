@@ -2,9 +2,12 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 
+import { AppButton } from '@/components/primitives/AppButton';
+import { AppIconButton } from '@/components/primitives/AppIconButton';
 import { AppText } from '@/components/primitives/AppText';
+import { GlassSurface } from '@/components/primitives/GlassSurface';
 import { ReminderService } from '@/modules/reminders/reminder.service';
 import { SettingsService } from '@/modules/settings/settings.service';
 import { colors, spacing } from '@/theme';
@@ -48,34 +51,34 @@ export function SettingsNotificationsScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
-          <Pressable accessibilityRole="button" hitSlop={8} onPress={() => router.back()} style={styles.iconButton}>
+          <AppIconButton onPress={() => router.back()}>
             <Ionicons color={colors.text} name="arrow-back" size={22} />
-          </Pressable>
+          </AppIconButton>
           <View style={styles.headerCopy}>
             <AppText variant="eyebrow">Settings</AppText>
             <AppText variant="title">Notifications</AppText>
           </View>
         </View>
 
-        <View style={styles.card}>
+        <GlassSurface style={styles.card} useBlur={false}>
           <AppText variant="action">System notification permission</AppText>
           <AppText color={colors.textMuted}>
             Current status: {permissionState}
           </AppText>
-          <Pressable accessibilityRole="button" onPress={() => void reminderService.openSystemNotificationSettings()} style={styles.secondaryButton}>
-            <AppText variant="caption">Open system notification settings</AppText>
-          </Pressable>
-        </View>
+          <AppButton onPress={() => void reminderService.openSystemNotificationSettings()} tone="secondary">
+            Open system notification settings
+          </AppButton>
+        </GlassSurface>
 
-        <View style={styles.card}>
+        <GlassSurface style={styles.card} useBlur={false}>
           <AppText variant="action">In-app reminder support</AppText>
           <AppText color={colors.textMuted}>
             In-app reminders stay available even if lock-screen notifications are denied.
           </AppText>
-          <Pressable accessibilityRole="button" onPress={toggleInAppReminders} style={styles.secondaryButton}>
-            <AppText variant="caption">{inAppEnabled ? 'Disable in-app reminders' : 'Enable in-app reminders'}</AppText>
-          </Pressable>
-        </View>
+          <AppButton onPress={toggleInAppReminders} tone="secondary">
+            {inAppEnabled ? 'Disable in-app reminders' : 'Enable in-app reminders'}
+          </AppButton>
+        </GlassSurface>
       </ScrollView>
     </SafeAreaView>
   );
@@ -83,10 +86,6 @@ export function SettingsNotificationsScreen() {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 20,
-    borderWidth: 1,
     gap: spacing.sm,
     padding: spacing.md,
   },
@@ -104,28 +103,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
   },
-  iconButton: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 999,
-    borderWidth: 1,
-    height: 42,
-    justifyContent: 'center',
-    width: 42,
-  },
   safeArea: {
     backgroundColor: colors.background,
     flex: 1,
-  },
-  secondaryButton: {
-    alignItems: 'center',
-    borderColor: colors.border,
-    borderRadius: 999,
-    borderWidth: 1,
-    justifyContent: 'center',
-    minHeight: 40,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
   },
 });
