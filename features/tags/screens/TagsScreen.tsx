@@ -170,7 +170,7 @@ export function TagsScreen() {
               <AppButton
                 disabled={!createLabel.trim() || pendingAction === 'create'}
                 onPress={() => void handleCreate()}
-                style={styles.primaryButton}
+                style={styles.createActionButton}
               >
                 Add tag
               </AppButton>
@@ -238,11 +238,12 @@ export function TagsScreen() {
                         setEditingTagId(item.id);
                         setEditingLabel(item.label);
                       }}
-                      size="sm"
+                      size="md"
+                      testID={`tag-edit-${item.id}`}
                     >
                       <Ionicons color={colors.text} name="create-outline" size={18} />
                     </AppIconButton>
-                    <AppIconButton onPress={() => handleDelete(item)} size="sm">
+                    <AppIconButton onPress={() => handleDelete(item)} size="md" testID={`tag-delete-${item.id}`}>
                       <Ionicons color={colors.danger} name="trash-outline" size={18} />
                     </AppIconButton>
                   </View>
@@ -275,8 +276,12 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
   },
   createCard: {
-    gap: spacing.md,
+    gap: spacing.lg,
     padding: spacing.md,
+  },
+  createActionButton: {
+    alignSelf: 'flex-start',
+    minWidth: 136,
   },
   editorBlock: {
     gap: spacing.sm,
@@ -297,14 +302,17 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   inputWrap: {
-    gap: spacing.xs,
+    gap: spacing.sm,
   },
   primaryButton: {
     minWidth: 120,
   },
   rowActions: {
+    alignItems: 'center',
+    flexShrink: 0,
     flexDirection: 'row',
-    gap: spacing.xs,
+    gap: spacing.sm,
+    marginLeft: spacing.sm,
   },
   safeArea: {
     backgroundColor: colors.background,
@@ -319,11 +327,15 @@ const styles = StyleSheet.create({
   tagCopy: {
     flex: 1,
     gap: spacing.xs,
+    minWidth: 0,
   },
   tagMain: {
+    alignItems: 'center',
     backgroundColor: 'transparent',
     borderColor: 'transparent',
     borderWidth: 0,
+    flexDirection: 'row',
+    gap: spacing.sm,
     justifyContent: 'space-between',
     minHeight: 0,
     paddingHorizontal: 0,

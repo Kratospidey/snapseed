@@ -4,7 +4,7 @@ import React from 'react';
 import { TabsLayoutShell } from '@/components/navigation/TabsLayoutShell';
 
 const mockPush = jest.fn();
-const mockTabsProps: Array<{ initialRouteName?: string }> = [];
+const mockTabsProps: Array<{ initialRouteName?: string; screenOptions?: unknown }> = [];
 const mockScreenNames: string[] = [];
 
 jest.mock('expo-router', () => {
@@ -45,5 +45,17 @@ describe('TabsLayoutShell', () => {
       'tags/index',
       'settings/index',
     ]);
+  });
+
+  it('provides a custom glass tab-bar background renderer', () => {
+    render(<TabsLayoutShell />);
+
+    const screenOptions = mockTabsProps.at(0)?.screenOptions;
+    expect(typeof screenOptions).toBe('function');
+
+    const resolvedOptions = (screenOptions as (args: { route: { name: string } }) => { tabBarBackground?: unknown })({
+      route: { name: 'library/index' },
+    });
+    expect(typeof resolvedOptions.tabBarBackground).toBe('function');
   });
 });

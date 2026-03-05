@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { BlurView } from 'expo-blur';
 import { Tabs, useRouter } from 'expo-router';
-import { Animated, StyleSheet, View } from 'react-native';
+import { Animated, Platform, StyleSheet, View } from 'react-native';
 import { useEffect, useRef } from 'react';
 
 import { AppText } from '@/components/primitives/AppText';
@@ -49,18 +50,13 @@ export function TabsLayoutShell() {
         screenOptions={({ route }) => ({
           headerShown: false,
           tabBarActiveTintColor: colors.accent,
+          tabBarBackground: () => <TabBarGlassBackground />,
           tabBarInactiveTintColor: colors.textMuted,
           tabBarLabelStyle: {
             fontSize: typography.caption.fontSize,
             fontWeight: '600',
           },
-          tabBarStyle: {
-            backgroundColor: colors.surface,
-            borderTopColor: colors.border,
-            height: 72,
-            paddingBottom: spacing.sm,
-            paddingTop: spacing.xs,
-          },
+          tabBarStyle: styles.tabBar,
           tabBarIcon: ({ color, size }) => (
             <Ionicons
               color={color}
@@ -94,6 +90,22 @@ export function TabsLayoutShell() {
   );
 }
 
+function TabBarGlassBackground() {
+  const shouldUseBlur = Platform.OS === 'ios';
+
+  return (
+    <View pointerEvents="none" style={styles.tabBarBackground}>
+      {shouldUseBlur ? (
+        <BlurView intensity={26} style={StyleSheet.absoluteFill} tint="light" />
+      ) : (
+        <View pointerEvents="none" style={styles.tabBarFallbackBase} />
+      )}
+      <View pointerEvents="none" style={styles.tabBarOverlayTint} />
+      <View pointerEvents="none" style={styles.tabBarTopEdge} />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   fab: {
     alignItems: 'center',
@@ -118,5 +130,40 @@ const styles = StyleSheet.create({
   shell: {
     backgroundColor: colors.background,
     flex: 1,
+  },
+  tabBar: {
+    backgroundColor: 'transparent',
+    borderTopLeftRadius: radii.xl,
+    borderTopRightRadius: radii.xl,
+    borderTopWidth: 0,
+    elevation: 10,
+    height: 72,
+    overflow: 'hidden',
+    paddingBottom: spacing.sm,
+    paddingTop: spacing.xs,
+    shadowColor: colors.shadow,
+    shadowOffset: { height: -4, width: 0 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+  },
+  tabBarBackground: {
+    backgroundColor: colors.surfaceGlass,
+    ...StyleSheet.absoluteFillObject,
+  },
+  tabBarFallbackBase: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.82)',
+  },
+  tabBarOverlayTint: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(241, 247, 243, 0.32)',
+  },
+  tabBarTopEdge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.72)',
+    height: 1,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
   },
 });

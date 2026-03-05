@@ -59,5 +59,7 @@ describe('TagsScreen', () => {
 
     expect(screen.getByText('#study')).toBeTruthy();
     expect(screen.getByText('3 Captures')).toBeTruthy();
+    expect(screen.getByTestId('tag-edit-tag-1')).toBeTruthy();
+    expect(screen.getByTestId('tag-delete-tag-1')).toBeTruthy();
   });
 });
