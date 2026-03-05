@@ -32,7 +32,6 @@ export const LibraryGridCard = memo(function LibraryGridCard({
 
   return (
     <TactilePressable accessibilityRole="button" intensity="soft" onPress={handlePress} style={styles.card}>
-      <View pointerEvents="none" style={styles.cardTopHighlight} />
       <View pointerEvents="none" style={styles.cardInsetBorder} />
       <View style={styles.thumbnailWrap}>
         <CapturePreviewImage
@@ -87,17 +86,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.55)',
     borderRadius: radii.xl,
     borderWidth: 1,
-    opacity: 0.5,
+    opacity: 0.36,
     zIndex: 1,
-  },
-  cardTopHighlight: {
-    backgroundColor: 'rgba(255, 255, 255, 0.58)',
-    height: 1,
-    left: spacing.sm,
-    position: 'absolute',
-    right: spacing.sm,
-    top: spacing.xs,
-    zIndex: 2,
   },
   metaArea: {
     gap: spacing.xs,

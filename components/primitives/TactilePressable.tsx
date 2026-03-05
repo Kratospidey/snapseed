@@ -4,6 +4,7 @@ import { Pressable, type PressableProps, type StyleProp, type ViewStyle } from '
 type TactilePressableProps = PropsWithChildren<
   Omit<PressableProps, 'style'> & {
     intensity?: 'soft' | 'strong';
+    shadowMode?: 'default' | 'none';
     style?: StyleProp<ViewStyle>;
   }
 >;
@@ -21,11 +22,13 @@ const SHADOW_FACTOR_BY_INTENSITY = {
 export function TactilePressable({
   children,
   intensity = 'soft',
+  shadowMode = 'default',
   style,
   ...props
 }: TactilePressableProps) {
   const pressedScale = PRESS_SCALE_BY_INTENSITY[intensity];
   const pressedShadowFactor = SHADOW_FACTOR_BY_INTENSITY[intensity];
+  const shouldApplyShadow = shadowMode === 'default';
 
   return (
     <Pressable
@@ -34,16 +37,22 @@ export function TactilePressable({
         style,
         pressed
           ? {
-              elevation: 4 * pressedShadowFactor,
-              shadowOpacity: 0.12 * pressedShadowFactor,
-              shadowRadius: 12 * pressedShadowFactor,
               transform: [{ scale: pressedScale }],
+              ...(shouldApplyShadow
+                ? {
+                    elevation: 4 * pressedShadowFactor,
+                    shadowOpacity: 0.12 * pressedShadowFactor,
+                    shadowRadius: 12 * pressedShadowFactor,
+                  }
+                : null),
             }
-          : {
-              elevation: 4,
-              shadowOpacity: 0.12,
-              shadowRadius: 12,
-            },
+          : shouldApplyShadow
+            ? {
+                elevation: 4,
+                shadowOpacity: 0.12,
+                shadowRadius: 12,
+              }
+            : null,
       ]}
     >
       {children}

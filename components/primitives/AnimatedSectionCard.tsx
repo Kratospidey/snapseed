@@ -25,6 +25,7 @@ export function AnimatedSectionCard({
       accessibilityRole={accessibilityRole}
       intensity="soft"
       onPress={onPress}
+      shadowMode="none"
       style={style}
       testID={testID}
     >

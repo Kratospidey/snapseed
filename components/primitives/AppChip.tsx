@@ -29,6 +29,7 @@ export function AppChip({
       disabled={disabled}
       intensity={selected ? 'strong' : 'soft'}
       onPress={onPress}
+      shadowMode="none"
       style={[
         styles.base,
         selected ? styles.selected : null,
